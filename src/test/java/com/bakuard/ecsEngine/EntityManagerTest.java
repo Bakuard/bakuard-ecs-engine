@@ -31,12 +31,12 @@ class EntityManagerTest {
     }
 
     @DisplayName("""
-            create():
+            create(), remove(entity):
              some entity indexes have been used and subsequently removed several times
              => return entity with reused index and increased generation
             """)
     @Test
-    void create2() {
+    void createAndRemove1() {
         EntityManager manager = new EntityManager();
         for(int i = 0; i < 1000; ++i) manager.create();
 
@@ -44,9 +44,55 @@ class EntityManagerTest {
         for(int i = 0; i < 10; ++i) {
             for(Entity entity : createEntities(i, 0,906,512,112,704,705,55,54,53,12,400))
                 manager.remove(entity);
-            for(Entity entity : createEntities(i + 1, 400,12,53,54,55,705,704,112,512,906,0))
+            for(Entity entity : createEntities(i + 1, 0,12,53,54,55,112,400,512,704,705,906))
                 assertions.assertThat(manager.create()).isEqualTo(entity);
         }
+        assertions.assertAll();
+    }
+
+    @DisplayName("""
+            create(), remove(entity):
+             entity has already been removed,
+             there is entity with same index
+             => doesn't remove entity with same index
+            """)
+    @Test
+    void createAndRemove2() {
+        EntityManager manager = new EntityManager();
+        for(int i = 0; i < 1000; ++i) manager.create();
+        Entity removedEntity = new Entity(512, 0);
+
+        manager.remove(removedEntity);
+        Entity newEntity = manager.create();
+        for(int i = 0; i < 10; ++i) manager.remove(removedEntity);
+
+        SoftAssertions assertions = new SoftAssertions();
+        assertions.assertThat(newEntity.index()).isEqualTo(removedEntity.index());
+        assertions.assertThat(manager.isAlive(newEntity)).isTrue();
+        assertions.assertThat(newEntity.generation()).isEqualTo(1);
+        assertions.assertAll();
+    }
+
+    @DisplayName("""
+            create(), remove(entity):
+             remove the same entity several time,
+             create new several entities
+            """)
+    @Test
+    void createAndRemove3() {
+        EntityManager manager = new EntityManager();
+        for(int i = 0; i < 1000; ++i) manager.create();
+        Entity removedEntity = new Entity(512, 0);
+
+        for(int i = 0; i < 10; ++i) manager.remove(removedEntity);
+        Entity entity1 = manager.create();
+        Entity entity2 = manager.create();
+        Entity entity3 = manager.create();
+
+        SoftAssertions assertions = new SoftAssertions();
+        assertions.assertThat(entity1).isEqualTo(new Entity(512, 1));
+        assertions.assertThat(entity2).isEqualTo(new Entity(1000, 0));
+        assertions.assertThat(entity3).isEqualTo(new Entity(1001, 0));
         assertions.assertAll();
     }
 
@@ -122,29 +168,6 @@ class EntityManagerTest {
         Assertions.assertThat(actual).isTrue();
     }
 
-    @DisplayName("""
-            remove(entity):
-             entity has already been removed,
-             there is entity with same index
-             => doesn't remove entity with same index
-            """)
-    @Test
-    void remove1() {
-        EntityManager manager = new EntityManager();
-        for(int i = 0; i < 1000; ++i) manager.create();
-        Entity removedEntity = new Entity(512, 0);
-
-        manager.remove(removedEntity);
-        Entity newEntity = manager.create();
-        for(int i = 0; i < 10; ++i) manager.remove(removedEntity);
-
-        SoftAssertions assertions = new SoftAssertions();
-        assertions.assertThat(newEntity.index()).isEqualTo(removedEntity.index());
-        assertions.assertThat(manager.isAlive(newEntity)).isTrue();
-        assertions.assertThat(newEntity.generation()).isEqualTo(1);
-        assertions.assertAll();
-    }
-
     @DisplayName("snapshot():")
     @ParameterizedTest(name = """
             note: {2},
@@ -214,7 +237,7 @@ class EntityManagerTest {
                         ),
                         new EntityManagerSnapshot(
                                 new DynamicArray<>(),
-                                createEntities(1, 9,8,7,6,5,4,3,2,1,0)
+                                createEntities(1, 0,1,2,3,4,5,6,7,8,9)
                         ),
                         "EntityManager hasn't living entities and has reusable entities"
                 ),
@@ -225,7 +248,7 @@ class EntityManagerTest {
                         ),
                         new EntityManagerSnapshot(
                                 createEntities(0, 0,1,2,6,7,8),
-                                createEntities(1, 9,5,4,3)
+                                createEntities(1, 3,4,5,9)
                         ),
                         "EntityManager has living entities and has reusable entities"
                 )
@@ -265,11 +288,11 @@ class EntityManagerTest {
                         new EntityManager(),
                         new EntityManagerSnapshot(
                                 createEntities(0, 0,1,2,6,7,8),
-                                createEntities(1, 9,5,4,3)
+                                createEntities(1, 3,4,5,9)
                         ),
                         createManager(
                                 10,
-                                createEntities(0, 9,5,4,3)
+                                createEntities(0, 3,4,5,9)
                         ),
                         "snapshot has living entities ans has reusable entities"
                 )
