@@ -1,6 +1,9 @@
 package com.bakuard.ecsEngine;
 
 import com.bakuard.collections.DynamicArray;
+import com.bakuard.ecsEngine.entity.Entity;
+import com.bakuard.ecsEngine.entity.EntityManager;
+import com.bakuard.ecsEngine.entity.EntityManagerSnapshot;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -201,7 +204,7 @@ class EntityManagerTest {
 
     private static DynamicArray<Entity> createEntities(int generation, int... indexes) {
         DynamicArray<Entity> result = new DynamicArray<>();
-        for(int index : indexes) result.append(new Entity(index, generation));
+        for(int index : indexes) result.addLast(new Entity(index, generation));
         return result;
     }
 

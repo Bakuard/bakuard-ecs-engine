@@ -1,6 +1,8 @@
-package com.bakuard.ecsEngine;
+package com.bakuard.ecsEngine.entity;
 
 import com.bakuard.collections.ReadableLinearStructure;
+import com.bakuard.ecsEngine.entity.Entity;
+import com.bakuard.ecsEngine.entity.EntityManager;
 
 /**
  * Снимок состояния {@link EntityManager}. Подробнее см. {@link EntityManager#snapshot()}.

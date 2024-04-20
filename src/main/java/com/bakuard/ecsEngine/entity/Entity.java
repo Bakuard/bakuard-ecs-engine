@@ -1,4 +1,4 @@
-package com.bakuard.ecsEngine;
+package com.bakuard.ecsEngine.entity;
 
 /**
  * Уникальный идентификатор для игровых объектов. Представляет собой комбинацию index и generation, которая

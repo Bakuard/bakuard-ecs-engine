@@ -1,150 +1,159 @@
 package com.bakuard.ecsEngine;
 
 import com.bakuard.collections.Bits;
-import com.bakuard.collections.function.IndexBiConsumer;
-import com.bakuard.ecsEngine.store.SparseArray;
-
-import java.util.HashMap;
-import java.util.Iterator;
+import com.bakuard.ecsEngine.component.CompsManager;
+import com.bakuard.ecsEngine.component.Filter;
+import com.bakuard.ecsEngine.component.TagsManager;
+import com.bakuard.ecsEngine.entity.Entity;
+import com.bakuard.ecsEngine.entity.EntityManager;
 
 public final class World {
 
-    private final HashMap<String, Bits> tags;
-    private final HashMap<Class<?>, ComponentStore> components;
     private final EntityManager entityManager;
+    private final CompsManager compsManager;
+    private final TagsManager tagsManager;
+
+    public World() {
+        this(new EntityManager());
+    }
 
     public World(EntityManager entityManager) {
         this.entityManager = entityManager;
-        this.tags = new HashMap<>();
-        this.components = new HashMap<>();
+        this.compsManager = new CompsManager(entityManager);
+        this.tagsManager = new TagsManager(entityManager);
     }
+
 
     public Entity create() {
         return entityManager.create();
     }
 
-    public Entity create(Object... components) {
+    public Entity create(Object... comps) {
         Entity entity = entityManager.create();
-        attach(entity, components);
+        compsManager.attachComps(entity, comps);
         return entity;
     }
 
     public void remove(Entity entity) {
-        if(entityManager.isAlive(entity)) {
-            detachAll(entity);
-            detachAllTags(entity);
-            entityManager.remove(entity);
-        }
+        compsManager.detachAllComps(entity);
+        tagsManager.detachAllTags(entity);
+        entityManager.remove(entity);
     }
 
     public boolean isAlive(Entity entity) {
         return entityManager.isAlive(entity);
     }
 
-    public void attach(Entity entity, Object component) {
-        components.computeIfAbsent(component.getClass(), compType -> new SparseArray())
-                .attach(entity, component);
+
+    public void attachComp(Entity entity, Object comp) {
+        compsManager.attachComp(entity, comp);
     }
 
-    public void attach(Entity entity, Object... components) {
-        for(Object component : components) attach(entity, component);
+    public void attachComps(Entity entity, Object... comps) {
+       compsManager.attachComps(entity, comps);
     }
 
-    public <T> void detach(Entity entity, Class<T> componentType) {
-        ComponentStore store = components.get(componentType);
-        if(store != null) store.detach(entity);
+    public <T> void detachComp(Entity entity, Class<T> compType) {
+        compsManager.detachComp(entity, compType);
     }
 
-    public void detach(Entity entity, Class<?>... componentTypes) {
-        for(Class<?> componentType : componentTypes) detach(entity, componentType);
+    public void detachComps(Entity entity, Class<?>... compTypes) {
+        compsManager.detachComps(entity, compTypes);
     }
 
-    public void detachAll(Entity entity) {
-        components.forEach((componentType, componentStore) -> componentStore.detach(entity));
+    public void detachAllComps(Entity entity) {
+        compsManager.detachAllComps(entity);
     }
 
-    public void replaceAll(Entity entity, Object... components) {
-        detachAll(entity);
-        attach(entity, components);
+    public void replaceAllComps(Entity entity, Object... comps) {
+        compsManager.replaceAllComps(entity, comps);
     }
+
+
+    public <T> T getComponent(Entity entity, Class<T> compType) {
+        return compsManager.getComponent(entity, compType);
+    }
+
+    public <T> boolean hasComponent(Entity entity, Class<T> compType) {
+        return compsManager.hasComponent(entity, compType);
+    }
+
+    public boolean hasAllComponents(Entity entity, Class<?>... compTypes) {
+        return compsManager.hasAllComponents(entity, compTypes);
+    }
+
+    public boolean hasNoneOfComponents(Entity entity, Class<?>... compTypes) {
+        return compsManager.hasNoneOfComponents(entity, compTypes);
+    }
+
+    public boolean haveEqualComponents(Entity firstEntity, Entity secondEntity) {
+        return compsManager.haveEqualComponents(firstEntity, secondEntity);
+    }
+
 
     public void attachTag(Entity entity, String tag) {
-        tags.computeIfAbsent(tag, key -> new Bits(entityManager.totalEntities()))
-                .growToIndex(entity.index())
-                .set(entity.index());
+        tagsManager.attachTag(entity, tag);
     }
 
     public void attachTags(Entity entity, String... tags) {
-        for(String tag : tags) attachTag(entity, tag);
+        tagsManager.attachTags(entity, tags);
     }
 
     public void detachTag(Entity entity, String tag) {
-        Bits bits = tags.get(tag);
-        if(bits != null && bits.inBound(entity.index())) bits.clear(entity.index());
+        tagsManager.detachTag(entity, tag);
     }
 
     public void detachTags(Entity entity, String... tags) {
-        for(String tag : tags) detachTag(entity, tag);
+        tagsManager.detachTags(entity, tags);
     }
 
     public void detachAllTags(Entity entity) {
-        tags.forEach((key, bits) -> {
-            if(bits.inBound(entity.index())) bits.clear(entity.index());
-        });
+        tagsManager.detachAllTags(entity);
     }
 
     public void replaceAllTags(Entity entity, String... tags) {
-        detachAllTags(entity);
-        attachTags(entity, tags);
+        tagsManager.replaceAllTags(entity, tags);
     }
 
-    public <T> T getComponent(Entity entity, Class<T> componentType) {
-        T result = null;
-        ComponentStore store = components.get(componentType);
-        if(store != null) result = (T)store.get(entity);
-        return result;
-    }
 
     public boolean hasTag(Entity entity, String tag) {
-        Bits bits = tags.get(tag);
-        return  bits != null && bits.inBound(entity.index()) && bits.get(entity.index());
+        return tagsManager.hasTag(entity, tag);
     }
 
-    public boolean match(Entity entity, EntityFilter filter) {
-        return false;
+    public boolean hasAllTags(Entity entity, String... tags) {
+        return tagsManager.hasAllTags(entity, tags);
     }
 
-    public boolean haveEqualComponentsAndTags(Entity firstEntity, Entity secondEntity) {
-        return false;
+    public boolean hasNoneOfTags(Entity entity, String... tags) {
+        return tagsManager.hasNoneOfTags(entity, tags);
     }
 
-    public Iterator<Entity> select(EntityFilter filter) {
-        return null;
-    }
-
-    public void forEach(EntityFilter filter, IndexBiConsumer<Entity> consumer) {
-
+    public boolean haveEqualTags(Entity firstEntity, Entity secondEntity) {
+        return tagsManager.haveEqualTags(firstEntity, secondEntity);
     }
 
 
-    public <T> World registerComponentStore(ComponentStore store, Class<T> componentType) {
-        components.put(componentType, store);
-        return this;
+    public Bits selectEntityIndexes(Filter filter) {
+        Bits entityIndexes = entityManager.createAliveEntitiesMask();
+
+        compsManager.excludeEntityIndexesWithout(entityIndexes, filter.getAllComps());
+        tagsManager.excludeEntityIndexesWithout(entityIndexes, filter.getAllTags());
+        compsManager.excludeEntityIndexesWith(entityIndexes, filter.getNoneComps());
+        tagsManager.excludeEntityIndexesWith(entityIndexes, filter.getNoneTags());
+
+        return entityIndexes;
     }
 
-    public <T> ComponentStore getComponentStore(Class<T> componentType) {
-        return components.get(componentType);
-    }
 
     public EntityManager getEntityManager() {
-        return null;
+        return entityManager;
     }
 
-    public void putSingletonComponent(String name, Object component) {
-
+    public CompsManager getCompsManager() {
+        return compsManager;
     }
 
-    public <T> T getSingletonComponent(String name, Object component) {
-        return null;
+    public TagsManager getTagsManager() {
+        return tagsManager;
     }
 }
