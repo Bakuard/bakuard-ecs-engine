@@ -1,4 +1,0 @@
-[submodule "BakuardCollections"]
-	path = BakuardCollections
-	url = ../BakuardCollections
-	branch = build-0-2-0

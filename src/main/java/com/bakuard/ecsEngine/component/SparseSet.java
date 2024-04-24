@@ -1,5 +1,6 @@
 package com.bakuard.ecsEngine.component;
 
+import com.bakuard.collections.Bits;
 import com.bakuard.ecsEngine.entity.Entity;
 
 import java.util.Arrays;
@@ -10,15 +11,18 @@ public final class SparseSet implements CompPool {
 
     private static final int INIT_CAPACITY = 10;
 
+
     private int[] entityIndexToComp;
     private Object[] comps;
     private Entity[] entities;
     private int size;
+    private final Bits entityIndexes;
 
     public SparseSet() {
         entityIndexToComp = new int[INIT_CAPACITY];
         comps = new Object[INIT_CAPACITY];
         entities = new Entity[INIT_CAPACITY];
+        entityIndexes = new Bits(128);
 
         Arrays.fill(entityIndexToComp, -1);
     }
@@ -26,11 +30,13 @@ public final class SparseSet implements CompPool {
     @Override
     public void attachComp(Entity entity, Object component) {
         int oldSize = size;
-        growSparseArray(entity.index());
+        growSparseArray(entity.index() + 1);
         growDensityArrays(size + 1);
         entityIndexToComp[entity.index()] = oldSize;
         comps[oldSize] = component;
         entities[oldSize] = entity;
+
+        entityIndexes.growToIndex(entity.index()).set(entity.index());
     }
 
     @Override
@@ -46,6 +52,8 @@ public final class SparseSet implements CompPool {
             comps[lastCompsIndex] = null;
             entities[compIndex] = entities[lastCompsIndex];
             entities[lastCompsIndex] = null;
+
+            entityIndexes.clear(entity.index());
         }
     }
 
@@ -56,7 +64,6 @@ public final class SparseSet implements CompPool {
             if(firstIndex > -1 && secondIndex > -1) {
                 swapEntityIndexToComp(first.index(), second.index());
                 swapEntities(firstIndex, secondIndex);
-                swapComps(firstIndex, secondIndex);
             }
         }
     }
@@ -83,6 +90,11 @@ public final class SparseSet implements CompPool {
         for(int i = size - 1; i >= 0; --i) {
             consumer.accept(entities[i], (T) comps[i]);
         }
+    }
+
+    @Override
+    public Bits getEntityIndexes() {
+        return entityIndexes;
     }
 
     @Override
@@ -135,8 +147,9 @@ public final class SparseSet implements CompPool {
 
     private void growSparseArray(int newSize) {
         if(newSize > entityIndexToComp.length) {
+            int oldSize = entityIndexToComp.length;
             entityIndexToComp = Arrays.copyOf(entityIndexToComp, calculateCapacity(newSize));
-            Arrays.fill(entityIndexToComp, newSize, entityIndexToComp.length, -1);
+            Arrays.fill(entityIndexToComp, oldSize, entityIndexToComp.length, -1);
         }
     }
 
@@ -161,12 +174,6 @@ public final class SparseSet implements CompPool {
         Entity firstComp = entities[firstIndex];
         entities[firstIndex] = entities[secondIndex];
         entities[secondIndex] = firstComp;
-    }
-
-    private void swapComps(int firstIndex, int secondIndex) {
-        Object firstComp = comps[firstIndex];
-        comps[firstIndex] = comps[secondIndex];
-        comps[secondIndex] = firstComp;
     }
 
 

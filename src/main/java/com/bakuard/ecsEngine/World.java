@@ -34,6 +34,10 @@ public final class World {
         return entity;
     }
 
+    public Entity getEntityByIndex(int index) {
+        return entityManager.getEntityByIndex(index);
+    }
+
     public void remove(Entity entity) {
         compsManager.detachAllComps(entity);
         tagsManager.detachAllTags(entity);
@@ -70,24 +74,24 @@ public final class World {
     }
 
 
-    public <T> T getComponent(Entity entity, Class<T> compType) {
-        return compsManager.getComponent(entity, compType);
+    public <T> T getComp(Entity entity, Class<T> compType) {
+        return compsManager.getComp(entity, compType);
     }
 
-    public <T> boolean hasComponent(Entity entity, Class<T> compType) {
-        return compsManager.hasComponent(entity, compType);
+    public <T> boolean hasComp(Entity entity, Class<T> compType) {
+        return compsManager.hasComp(entity, compType);
     }
 
-    public boolean hasAllComponents(Entity entity, Class<?>... compTypes) {
-        return compsManager.hasAllComponents(entity, compTypes);
+    public boolean hasAllComps(Entity entity, Class<?>... compTypes) {
+        return compsManager.hasAllComps(entity, compTypes);
     }
 
-    public boolean hasNoneOfComponents(Entity entity, Class<?>... compTypes) {
-        return compsManager.hasNoneOfComponents(entity, compTypes);
+    public boolean hasNoneOfComps(Entity entity, Class<?>... compTypes) {
+        return compsManager.hasNoneOfComps(entity, compTypes);
     }
 
-    public boolean haveEqualComponents(Entity firstEntity, Entity secondEntity) {
-        return compsManager.haveEqualComponents(firstEntity, secondEntity);
+    public boolean haveEqualComps(Entity firstEntity, Entity secondEntity) {
+        return compsManager.haveEqualComps(firstEntity, secondEntity);
     }
 
 
@@ -132,6 +136,10 @@ public final class World {
         return tagsManager.haveEqualTags(firstEntity, secondEntity);
     }
 
+
+    public boolean haveEqualCompsAndTags(Entity firstEntity, Entity secondEntity) {
+        return haveEqualTags(firstEntity, secondEntity) && haveEqualComps(firstEntity, secondEntity);
+    }
 
     public Bits selectEntityIndexes(Filter filter) {
         Bits entityIndexes = entityManager.createAliveEntitiesMask();

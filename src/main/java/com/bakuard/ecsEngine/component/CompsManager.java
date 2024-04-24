@@ -12,7 +12,7 @@ import java.util.Objects;
 public final class CompsManager {
 
     private final EntityManager entityManager;
-    private final HashMap<Class<?>, BitwiseProxyPool> compPools;
+    private final HashMap<Class<?>, CompPool> compPools;
 
     public CompsManager(EntityManager entityManager) {
         this.entityManager = entityManager;
@@ -51,7 +51,7 @@ public final class CompsManager {
     }
 
 
-    public <T> T getComponent(Entity entity, Class<T> compType) {
+    public <T> T getComp(Entity entity, Class<T> compType) {
         T result = null;
         if(entityManager.isAlive(entity)) {
             CompPool pool = compPools.get(compType);
@@ -60,11 +60,11 @@ public final class CompsManager {
         return result;
     }
 
-    public <T> boolean hasComponent(Entity entity, Class<T> compType) {
+    public <T> boolean hasComp(Entity entity, Class<T> compType) {
         return entityManager.isAlive(entity) && hasComponentIgnoringEntityState(entity, compType);
     }
 
-    public boolean hasAllComponents(Entity entity, Class<?>... compTypes) {
+    public boolean hasAllComps(Entity entity, Class<?>... compTypes) {
         boolean result = entityManager.isAlive(entity);
         for(int i = 0; i < compTypes.length && result; i++) {
             Class<?> compType = compTypes[i];
@@ -73,7 +73,7 @@ public final class CompsManager {
         return result;
     }
 
-    public boolean hasNoneOfComponents(Entity entity, Class<?>... compTypes) {
+    public boolean hasNoneOfComps(Entity entity, Class<?>... compTypes) {
         boolean result = entityManager.isAlive(entity);
         for(int i = 0; i < compTypes.length && result; i++) {
             Class<?> compType = compTypes[i];
@@ -82,13 +82,13 @@ public final class CompsManager {
         return result;
     }
 
-    public boolean haveEqualComponents(Entity firstEntity, Entity secondEntity) {
+    public boolean haveEqualComps(Entity firstEntity, Entity secondEntity) {
         boolean isFirstAlive = entityManager.isAlive(firstEntity);
         boolean isSecondAlive = entityManager.isAlive(secondEntity);
         boolean result = isFirstAlive && isSecondAlive;
 
         if(result) {
-            Iterator<BitwiseProxyPool> storeIterator = compPools.values().iterator();
+            Iterator<CompPool> storeIterator = compPools.values().iterator();
             while(result && storeIterator.hasNext()) {
                 CompPool store = storeIterator.next();
                 result = Objects.equals(store.getComp(firstEntity), store.getComp(secondEntity));
@@ -102,7 +102,7 @@ public final class CompsManager {
     public void excludeEntityIndexesWithout(Bits entityIndexes, ReadableLinearStructure<Class<?>> compTypes) {
         for(int i = 0; i < compTypes.size(); ++i) {
             Class<?> compType = compTypes.get(i);
-            BitwiseProxyPool pool = compPools.get(compType);
+            CompPool pool = compPools.get(compType);
             if(pool != null) {
                 entityIndexes.and(pool.getEntityIndexes());
             } else {
@@ -115,26 +115,26 @@ public final class CompsManager {
     public void excludeEntityIndexesWith(Bits entityIndexes, ReadableLinearStructure<Class<?>> compTypes) {
         for(int i = 0; i < compTypes.size(); ++i) {
             Class<?> compType = compTypes.get(i);
-            BitwiseProxyPool pool = compPools.get(compType);
+            CompPool pool = compPools.get(compType);
             if(pool != null) entityIndexes.andNot(pool.getEntityIndexes());
         }
     }
 
 
-    public <T> CompsManager registerComponentPool(CompPool pool, Class<T> compType) {
-        compPools.put(compType, new BitwiseProxyPool(pool));
+    public <T> CompsManager registerCompPool(CompPool pool, Class<T> compType) {
+        compPools.put(compType, pool);
         return this;
     }
 
-    public <T> CompPool getComponentPool(Class<T> compType) {
-        return compPools.get(compType);
+    public <T, S extends CompPool> S getCompPool(Class<T> compType) {
+        return (S) compPools.get(compType);
     }
 
 
     private void attachCompIgnoringEntityState(Entity entity, Object comp) {
         compPools.computeIfAbsent(
                         comp.getClass(),
-                        compType -> new BitwiseProxyPool(new SparseSet())
+                        compType -> new SparseSet()
                 )
                 .attachComp(entity, comp);
     }
@@ -145,7 +145,7 @@ public final class CompsManager {
     }
 
     private <T> boolean hasComponentIgnoringEntityState(Entity entity, Class<T> compType) {
-        ReadableCompPool compPool = compPools.get(compType);
+        CompPool compPool = compPools.get(compType);
         return compPool != null && compPool.hasComp(entity);
     }
 }
