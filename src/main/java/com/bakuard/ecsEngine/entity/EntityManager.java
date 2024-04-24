@@ -1,4 +1,4 @@
-package com.bakuard.ecsEngine;
+package com.bakuard.ecsEngine.entity;
 
 import com.bakuard.collections.Bits;
 import com.bakuard.collections.DynamicArray;
@@ -60,22 +60,31 @@ public final class EntityManager {
      * Если указанная сущность не удалялась, то возвращает true, иначе - false.
      */
     public boolean isAlive(Entity entity) {
-        final long packedEntity = entities[entity.index()];
-        return extractGeneration(packedEntity) == entity.generation();
+        return entity.index() < size && extractGeneration(entities[entity.index()]) == entity.generation();
+    }
+
+    /**
+     * Возвращает сущность по её индексу. Возвращаемая сущность может быть живой ({@link #isAlive(Entity)}),
+     * либо мертвой, в зависимости от того, жива ли сущность под указанным индексом на момент вызова
+     * данного метода. <br/><br/>
+     * Особый случай: если сущность с указанным индексом никогда ранее не создавалась через данный
+     * менеджер сущностей - метод вернет мертвую сущность с {@link Entity#generation()} равным 0.
+     */
+    public Entity getEntityByIndex(int index) {
+        return index < size ? unpack(entities[index]) : new Entity(index, 0);
     }
 
     /**
      * Создает снимок текущего состояния данного менеджера сущностей. Снимок представляет собой
-     * все созданные (включая удаленные) сущности через данный менеджер сущностей. Используется
-     * для дальнейшего восстановления текущего состояния.
+     * все созданные (включая удаленные) сущности через данный менеджер сущностей.
      */
     public EntityManagerSnapshot snapshot() {
         DynamicArray<Entity> alive = new DynamicArray<>();
         DynamicArray<Entity> notAlive = new DynamicArray<>();
         for(int i = 0; i < size; ++i) {
             long packedEntity = entities[i];
-            if(aliveEntitiesMask.get(i)) alive.append(unpack(packedEntity));
-            else notAlive.append(unpack(packedEntity));
+            if(aliveEntitiesMask.get(i)) alive.addLast(unpack(packedEntity));
+            else notAlive.addLast(unpack(packedEntity));
         }
 
         return new EntityManagerSnapshot(alive, notAlive);
@@ -96,6 +105,14 @@ public final class EntityManager {
         for(Entity entity : snapshot.notAlive()) {
             entities[entity.index()] = pack(entity);
         }
+    }
+
+    /**
+     * Возвращает битовую маску. Индексы единичных битов соответствуют сущностям, которые были живы
+     * на момент вызова этого метода.
+     */
+    public Bits createAliveEntitiesMask() {
+        return new Bits(aliveEntitiesMask);
     }
 
     @Override
