@@ -3,7 +3,6 @@ package com.bakuard.ecsEngine;
 import com.bakuard.collections.DynamicArray;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
-import com.bakuard.ecsEngine.entity.EntityManagerSnapshot;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -178,8 +177,8 @@ class EntityManagerTest {
             => expected snapshot is {1}
             """)
     @MethodSource("provideForSnapshot")
-    void snapshot(EntityManager manager, EntityManagerSnapshot expected, String note) {
-        EntityManagerSnapshot actual = manager.snapshot();
+    void snapshot(EntityManager manager, EntityManager.Snapshot expected, String note) {
+        EntityManager.Snapshot actual = manager.snapshot();
 
         Assertions.assertThat(actual).isEqualTo(expected);
     }
@@ -193,7 +192,7 @@ class EntityManagerTest {
             """)
     @MethodSource("provideForRestore")
     void restore(EntityManager origin,
-                 EntityManagerSnapshot snapshot,
+                 EntityManager.Snapshot snapshot,
                  EntityManager expected,
                  String note) {
         origin.restore(snapshot);
@@ -219,7 +218,7 @@ class EntityManagerTest {
         return Stream.of(
                 Arguments.of(
                         new EntityManager(),
-                        new EntityManagerSnapshot(new DynamicArray<>(), new DynamicArray<>()),
+                        new EntityManager.Snapshot(new DynamicArray<>(), new DynamicArray<>()),
                         "EntityManger is empty"
                 ),
                 Arguments.of(
@@ -227,7 +226,7 @@ class EntityManagerTest {
                                 10,
                                 new DynamicArray<>()
                         ),
-                        new EntityManagerSnapshot(
+                        new EntityManager.Snapshot(
                                 createEntities(0, 0,1,2,3,4,5,6,7,8,9),
                                 new DynamicArray<>()
                         ),
@@ -238,7 +237,7 @@ class EntityManagerTest {
                                 10,
                                 createEntities(0, 0,1,2,3,4,5,6,7,8,9)
                         ),
-                        new EntityManagerSnapshot(
+                        new EntityManager.Snapshot(
                                 new DynamicArray<>(),
                                 createEntities(1, 0,1,2,3,4,5,6,7,8,9)
                         ),
@@ -249,7 +248,7 @@ class EntityManagerTest {
                                 10,
                                 createEntities(0, 3,4,5,9)
                         ),
-                        new EntityManagerSnapshot(
+                        new EntityManager.Snapshot(
                                 createEntities(0, 0,1,2,6,7,8),
                                 createEntities(1, 3,4,5,9)
                         ),
@@ -262,7 +261,7 @@ class EntityManagerTest {
         return Stream.of(
                 Arguments.of(
                         new EntityManager(),
-                        new EntityManagerSnapshot(new DynamicArray<>(), new DynamicArray<>()),
+                        new EntityManager.Snapshot(new DynamicArray<>(), new DynamicArray<>()),
                         new EntityManager(),
                         "EntityManager is empty, snapshot is empty"
                 ),
@@ -271,13 +270,13 @@ class EntityManagerTest {
                                 10,
                                 createEntities(0, 3,4,5,9)
                         ),
-                        new EntityManagerSnapshot(new DynamicArray<>(), new DynamicArray<>()),
+                        new EntityManager.Snapshot(new DynamicArray<>(), new DynamicArray<>()),
                         new EntityManager(),
                         "EntityManager is not empty, snapshot is empty"
                 ),
                 Arguments.of(
                         new EntityManager(),
-                        new EntityManagerSnapshot(
+                        new EntityManager.Snapshot(
                                 createEntities(0, 0,1,2,3,4,5,6,7,8,9),
                                 new DynamicArray<>()
                         ),
@@ -289,7 +288,7 @@ class EntityManagerTest {
                 ),
                 Arguments.of(
                         new EntityManager(),
-                        new EntityManagerSnapshot(
+                        new EntityManager.Snapshot(
                                 createEntities(0, 0,1,2,6,7,8),
                                 createEntities(1, 3,4,5,9)
                         ),

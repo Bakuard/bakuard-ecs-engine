@@ -19,5 +19,5 @@ public interface CompPool {
 
     public <T> void forEach(BiConsumer<Entity, T> consumer);
 
-    public Bits getEntityIndexes();
+    public Bits getEntityIndexesMask();
 }
