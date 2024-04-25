@@ -11,10 +11,12 @@ import java.util.Iterator;
 public final class TagsManager {
 
     private final HashMap<String, Bits> tagMasks;
+    private final HashMap<String, Entity> singletonTags;
     private final EntityManager entityManager;
 
     public TagsManager(EntityManager entityManager) {
         this.tagMasks = new HashMap<>();
+        this.singletonTags = new HashMap<>();
         this.entityManager = entityManager;
     }
 
@@ -43,6 +45,7 @@ public final class TagsManager {
             tagMasks.forEach((key, bits) -> {
                 if(bits.inBound(entity.index())) bits.clear(entity.index());
             });
+            singletonTags.values().removeIf(entity::equals);
         }
     }
 
@@ -109,6 +112,21 @@ public final class TagsManager {
             Bits mask = tagMasks.get(tagName);
             if(mask != null) entityIndexes.andNot(mask);
         }
+    }
+
+
+    public void attachSingletonTag(Entity entity, String singletonTag) {
+        if(entityManager.isAlive(entity)) {
+            singletonTags.put(singletonTag, entity);
+        }
+    }
+
+    public void detachSingletonTag(String singletonTag) {
+        singletonTags.remove(singletonTag);
+    }
+
+    public Entity getEntityBySingletonTag(String singletonTag) {
+        return singletonTags.get(singletonTag);
     }
 
 
