@@ -93,7 +93,7 @@ public final class SparseSet implements CompPool {
     }
 
     @Override
-    public Bits getEntityIndexes() {
+    public Bits getEntityIndexesMask() {
         return entityIndexes;
     }
 

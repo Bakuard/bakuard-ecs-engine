@@ -104,7 +104,7 @@ public final class CompsManager {
             Class<?> compType = compTypes.get(i);
             CompPool pool = compPools.get(compType);
             if(pool != null) {
-                entityIndexes.and(pool.getEntityIndexes());
+                entityIndexes.and(pool.getEntityIndexesMask());
             } else {
                 entityIndexes.clearAll();
                 break;
@@ -116,7 +116,7 @@ public final class CompsManager {
         for(int i = 0; i < compTypes.size(); ++i) {
             Class<?> compType = compTypes.get(i);
             CompPool pool = compPools.get(compType);
-            if(pool != null) entityIndexes.andNot(pool.getEntityIndexes());
+            if(pool != null) entityIndexes.andNot(pool.getEntityIndexesMask());
         }
     }
 

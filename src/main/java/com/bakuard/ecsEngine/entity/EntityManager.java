@@ -2,6 +2,7 @@ package com.bakuard.ecsEngine.entity;
 
 import com.bakuard.collections.Bits;
 import com.bakuard.collections.DynamicArray;
+import com.bakuard.collections.ReadableLinearStructure;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -13,6 +14,16 @@ import java.util.Objects;
 public final class EntityManager {
 
     private static final int MIN_BITS_SIZE = 256;
+
+    /**
+     * Снимок состояния {@link EntityManager}. Подробнее см. {@link EntityManager#snapshot()}.
+     * @param alive все сущности, для которых вызов {@link EntityManager#isAlive(Entity)} на момент
+     *              создания этого снимка возвращал true.
+     * @param notAlive все сущности, для которых вызов {@link EntityManager#isAlive(Entity)} на момент
+     *                 создания этого снимка возвращал false.
+     */
+    public record Snapshot(ReadableLinearStructure<Entity> alive,
+                           ReadableLinearStructure<Entity> notAlive) {}
 
 
     private long[] entities;
@@ -78,7 +89,7 @@ public final class EntityManager {
      * Создает снимок текущего состояния данного менеджера сущностей. Снимок представляет собой
      * все созданные (включая удаленные) сущности через данный менеджер сущностей.
      */
-    public EntityManagerSnapshot snapshot() {
+    public Snapshot snapshot() {
         DynamicArray<Entity> alive = new DynamicArray<>();
         DynamicArray<Entity> notAlive = new DynamicArray<>();
         for(int i = 0; i < size; ++i) {
@@ -87,13 +98,13 @@ public final class EntityManager {
             else notAlive.addLast(unpack(packedEntity));
         }
 
-        return new EntityManagerSnapshot(alive, notAlive);
+        return new Snapshot(alive, notAlive);
     }
 
     /**
      * Заменяет текущее состояние менеджера сущностей на состояние сохраненное в snapshot.
      */
-    public void restore(EntityManagerSnapshot snapshot) {
+    public void restore(Snapshot snapshot) {
         size = snapshot.alive().size() + snapshot.notAlive().size();
         entities = new long[size];
         aliveEntitiesMask = new Bits(calculateBitsCapacity(size) + 1);
