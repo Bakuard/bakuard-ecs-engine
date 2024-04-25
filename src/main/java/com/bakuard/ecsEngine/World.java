@@ -137,6 +137,19 @@ public final class World {
     }
 
 
+    public void attachSingletonTag(Entity entity, String singletonTag) {
+        tagsManager.attachSingletonTag(entity, singletonTag);
+    }
+
+    public void detachSingletonTag(String singletonTag) {
+        tagsManager.detachSingletonTag(singletonTag);
+    }
+
+    public Entity getEntityBySingletonTag(String singletonTag) {
+        return tagsManager.getEntityBySingletonTag(singletonTag);
+    }
+
+
     public boolean haveEqualCompsAndTags(Entity firstEntity, Entity secondEntity) {
         return haveEqualTags(firstEntity, secondEntity) && haveEqualComps(firstEntity, secondEntity);
     }
