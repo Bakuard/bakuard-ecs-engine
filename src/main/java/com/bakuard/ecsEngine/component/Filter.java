@@ -5,7 +5,7 @@ import com.bakuard.collections.ReadableLinearStructure;
 
 import java.util.Objects;
 
-public class Filter {
+public final class Filter {
 
     private final ReadableLinearStructure<String> allTags;
     private final ReadableLinearStructure<String> noneTags;
