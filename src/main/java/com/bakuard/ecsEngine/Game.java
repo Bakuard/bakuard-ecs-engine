@@ -1,15 +1,22 @@
 package com.bakuard.ecsEngine;
 
+import com.bakuard.ecsEngine.gameLoop.GameLoop;
 import com.bakuard.ecsEngine.system.SystemManager;
 
-public class Game {
+public final class Game {
 
     private final World world;
     private final SystemManager systemManager;
+    private final GameLoop gameLoop;
 
     public Game() {
+        this(25, 5);
+    }
+
+    public Game(int numberUpdatePerSecond, int maxFrameSkip) {
         world = new World();
         systemManager = new SystemManager(this);
+        gameLoop = new GameLoop(numberUpdatePerSecond, maxFrameSkip, systemManager);
     }
 
     public World getWorld() {
@@ -18,5 +25,9 @@ public class Game {
 
     public SystemManager getSystemManager() {
         return systemManager;
+    }
+
+    public GameLoop getGameLoop() {
+        return gameLoop;
     }
 }

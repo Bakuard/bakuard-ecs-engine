@@ -6,5 +6,6 @@ module com.bakuard.ecsEngine {
     exports com.bakuard.ecsEngine.entity;
     exports com.bakuard.ecsEngine.component;
     exports com.bakuard.ecsEngine.system;
+    exports com.bakuard.ecsEngine.gameLoop;
 
 }

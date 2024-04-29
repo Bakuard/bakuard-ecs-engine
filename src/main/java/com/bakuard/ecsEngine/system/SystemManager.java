@@ -2,6 +2,7 @@ package com.bakuard.ecsEngine.system;
 
 import com.bakuard.collections.DynamicArray;
 import com.bakuard.ecsEngine.Game;
+import com.bakuard.ecsEngine.gameLoop.GameTime;
 
 import java.util.HashMap;
 
@@ -122,14 +123,12 @@ public final class SystemManager {
 
     /**
      * Обновляет все системы в группе в порядке их добавления в группу.
-     * @return ссылку на этот же объект.
      * @throws UnknownGroupException если нет группы с указанным именем.
      */
-    public SystemManager updateGroup(String groupName) {
+    public void updateGroup(String groupName, GameTime gameTime) {
         DynamicArray<SystemMeta> group = tryGetGroup(groupName);
         group.cloneAndMap((systemMeta, index) -> new SystemMeta(systemMeta))
-                .forEach(systemMeta -> systemMeta.system().update(systemMeta, game));
-        return this;
+                .forEach(systemMeta -> systemMeta.system().update(systemMeta, gameTime, game));
     }
 
 
