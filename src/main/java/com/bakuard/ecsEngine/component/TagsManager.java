@@ -129,6 +129,10 @@ public final class TagsManager {
         return singletonTags.get(singletonTag);
     }
 
+    public boolean hasSingletonTag(Entity entity, String singletonTag) {
+        return entityManager.isAlive(entity) && entity.equals(singletonTags.get(singletonTag));
+    }
+
 
     private void attachTagIgnoringEntityState(Entity entity, String tag) {
         tagMasks.computeIfAbsent(tag, key -> new Bits(entity.index() + 1))

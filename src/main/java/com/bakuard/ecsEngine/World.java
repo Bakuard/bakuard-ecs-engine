@@ -149,6 +149,10 @@ public final class World {
         return tagsManager.getEntityBySingletonTag(singletonTag);
     }
 
+    public boolean hasSingletonTag(Entity entity, String singletonTag) {
+        return tagsManager.hasSingletonTag(entity, singletonTag);
+    }
+
 
     public boolean haveEqualCompsAndTags(Entity firstEntity, Entity secondEntity) {
         return haveEqualTags(firstEntity, secondEntity) && haveEqualComps(firstEntity, secondEntity);
