@@ -121,9 +121,8 @@ public final class CompsManager {
     }
 
 
-    public <T> CompsManager registerCompPool(CompPool pool, Class<T> compType) {
+    public <T> void registerCompPool(CompPool pool, Class<T> compType) {
         compPools.put(compType, pool);
-        return this;
     }
 
     public <T, S extends CompPool> S getCompPool(Class<T> compType) {

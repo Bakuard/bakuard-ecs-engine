@@ -1,6 +1,7 @@
 package com.bakuard.ecsEngine;
 
 import com.bakuard.collections.Bits;
+import com.bakuard.ecsEngine.component.CompPool;
 import com.bakuard.ecsEngine.component.CompsManager;
 import com.bakuard.ecsEngine.component.Filter;
 import com.bakuard.ecsEngine.component.TagsManager;
@@ -14,11 +15,7 @@ public final class World {
     private final TagsManager tagsManager;
 
     public World() {
-        this(new EntityManager());
-    }
-
-    public World(EntityManager entityManager) {
-        this.entityManager = entityManager;
+        this.entityManager = new EntityManager();
         this.compsManager = new CompsManager(entityManager);
         this.tagsManager = new TagsManager(entityManager);
     }
@@ -167,6 +164,16 @@ public final class World {
         tagsManager.excludeEntityIndexesWith(entityIndexes, filter.getNoneTags());
 
         return entityIndexes;
+    }
+
+
+    public <T> World registerCompPool(CompPool pool, Class<T> compType) {
+        compsManager.registerCompPool(pool, compType);
+        return this;
+    }
+
+    public <T, S extends CompPool> S getCompPool(Class<T> compType) {
+        return compsManager.getCompPool(compType);
     }
 
 
