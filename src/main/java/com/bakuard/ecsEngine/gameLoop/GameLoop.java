@@ -115,7 +115,7 @@ public final class GameLoop {
         }
 
         void stop() {
-            currentState = State.SHUTDOWN;
+            if(currentState != State.STOP) currentState = State.SHUTDOWN;
         }
 
         State getCurrentState() {
