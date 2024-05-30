@@ -175,17 +175,4 @@ public final class World {
     public <T, S extends CompPool> S getCompPool(Class<T> compType) {
         return compsManager.getCompPool(compType);
     }
-
-
-    public EntityManager getEntityManager() {
-        return entityManager;
-    }
-
-    public CompsManager getCompsManager() {
-        return compsManager;
-    }
-
-    public TagsManager getTagsManager() {
-        return tagsManager;
-    }
 }
