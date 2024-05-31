@@ -18,7 +18,7 @@ public final class Game {
     public Game(int numberUpdatePerSecond, int maxFrameSkip, int maxEventBufferSize) {
         world = new World();
         systemManager = new SystemManager(this);
-        gameLoop = new GameLoop(numberUpdatePerSecond, maxFrameSkip, systemManager);
+        gameLoop = new GameLoop(numberUpdatePerSecond, maxFrameSkip, this);
         eventManager = new EventManager(maxEventBufferSize);
     }
 

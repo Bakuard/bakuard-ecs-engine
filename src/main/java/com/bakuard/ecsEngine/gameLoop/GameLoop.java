@@ -1,5 +1,7 @@
 package com.bakuard.ecsEngine.gameLoop;
 
+import com.bakuard.ecsEngine.Game;
+import com.bakuard.ecsEngine.event.Event;
 import com.bakuard.ecsEngine.system.SystemManager;
 
 public final class GameLoop {
@@ -15,14 +17,19 @@ public final class GameLoop {
         INPUT,
         WORK,
         OUTPUT,
-        DESTROY
+        DESTROY,
+        CRASH
+    }
+
+    public enum SingletonEvent {
+        UNHANDLED_EXCEPTION
     }
 
     private final GameSession gameSession;
 
     public GameLoop(int numberUpdatePerSecond,
                     int maxFrameSkip,
-                    SystemManager systemManager) {
+                    Game game) {
         if(numberUpdatePerSecond <= 0 || numberUpdatePerSecond > 1000) {
             throw new IllegalArgumentException(
                     "Expected: numberUpdatePerSecond > 0 || numberUpdatePerSecond <= 1000. " +
@@ -31,7 +38,7 @@ public final class GameLoop {
             throw new IllegalArgumentException("Expected: maxFrameSkip can't be less then zero. Actual: " + maxFrameSkip);
         }
 
-        gameSession = new GameSession(numberUpdatePerSecond, maxFrameSkip, systemManager);
+        gameSession = new GameSession(numberUpdatePerSecond, maxFrameSkip, game);
     }
 
     public void start() {
@@ -93,16 +100,16 @@ public final class GameLoop {
 
         private final int numberUpdatePerSecond;
         private final int maxFrameSkip;
-        private final SystemManager systemManager;
+        private final Game game;
         private volatile State currentState = State.STOP;
         private final GameTimeImpl gameTime;
 
         public GameSession(int numberUpdatePerSecond,
                            int maxFrameSkip,
-                           SystemManager systemManager) {
+                           Game game) {
             this.numberUpdatePerSecond = numberUpdatePerSecond;
             this.maxFrameSkip = maxFrameSkip;
-            this.systemManager = systemManager;
+            this.game = game;
 
             long updateIntervalInMillis = 1000L / numberUpdatePerSecond;
             gameTime = new GameTimeImpl(updateIntervalInMillis, updateIntervalInMillis);
@@ -125,6 +132,7 @@ public final class GameLoop {
         @Override
         public void run() {
             try {
+                final SystemManager systemManager = game.getSystemManager();
                 systemManager.updateGroup(Group.INIT.name(), gameTime);
 
                 final long updateInterval = gameTime.getUpdateIntervalInMillis();
@@ -144,6 +152,9 @@ public final class GameLoop {
                 }
 
                 systemManager.updateGroup(Group.DESTROY.name(), gameTime);
+            } catch(Exception e) {
+                game.getEventManager().pushSingletonEvent(new Event(SingletonEvent.UNHANDLED_EXCEPTION.name(), e));
+                game.getSystemManager().updateGroup(Group.CRASH.name(), gameTime);
             } finally {
                 currentState = State.STOP;
             }
@@ -154,7 +165,6 @@ public final class GameLoop {
             return "GameSession{"
                     + "numberUpdatePerSecond: \"" + numberUpdatePerSecond + "\""
                     + ", maxFrameSkip: \"" + maxFrameSkip + "\""
-                    + ", systemManager: " + systemManager
                     + ", currentState: \"" + getCurrentState() + "\""
                     + ", gameTime: " + gameTime
                     + "}";

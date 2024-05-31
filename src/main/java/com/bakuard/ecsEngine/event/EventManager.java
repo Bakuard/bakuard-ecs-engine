@@ -12,6 +12,7 @@ public class EventManager {
     private RingBuffer<Event> readBuffer;
     private final HashMap<String, EventQueue> eventQueues;
     private final Set<String> flags;
+    private final HashMap<String, Event> singletonEvents;
     private final Object lock = new Object();
 
     public EventManager(int maxEventBufferSize) {
@@ -19,6 +20,7 @@ public class EventManager {
         readBuffer = new RingBuffer<>(maxEventBufferSize);
         eventQueues = new HashMap<>();
         flags = new HashSet<>();
+        singletonEvents = new HashMap<>();
     }
 
     public EventQueue registerEventQueue(String queueName, int maxSize, String... eventNames) {
@@ -35,7 +37,7 @@ public class EventManager {
         return eventQueue;
     }
 
-    public void pushEventToBuffer(String eventName, Object eventPayload) {
+    public void pushEventToBufferQueue(String eventName, Object eventPayload) {
         synchronized(lock) {
             writeBuffer.addLastOrReplace(new Event(eventName, eventPayload));
         }
@@ -54,7 +56,7 @@ public class EventManager {
         }
     }
 
-    public void pushEvent(String eventName, Object eventPayload) {
+    public void pushEventToQueue(String eventName, Object eventPayload) {
         pushEvent(new Event(eventName, eventPayload));
     }
 
@@ -68,6 +70,18 @@ public class EventManager {
 
     public boolean checkFlag(String flagName) {
         return flags.contains(flagName);
+    }
+
+    public void pushSingletonEvent(Event event) {
+        singletonEvents.put(event.eventName(), event);
+    }
+
+    public Event pullSingletonEvent(String eventName) {
+        return singletonEvents.remove(eventName);
+    }
+
+    public Event getSingletonEvent(String eventName) {
+        return singletonEvents.get(eventName);
     }
 
 
