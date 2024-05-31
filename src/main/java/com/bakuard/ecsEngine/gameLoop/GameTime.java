@@ -6,4 +6,5 @@ public interface GameTime {
 
     public long getUpdateIntervalInMillis();
 
+    public long getTotalElapsedFramesInMillis();
 }

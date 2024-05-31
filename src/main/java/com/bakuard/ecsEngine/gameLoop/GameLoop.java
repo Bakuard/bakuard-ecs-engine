@@ -42,10 +42,7 @@ public final class GameLoop {
     }
 
     public void start() {
-        if(gameSession.prepareForStart()) {
-            Thread thread = new Thread(gameSession);
-            thread.start();
-        }
+        gameSession.start();
     }
 
     public void stop() {
@@ -56,7 +53,7 @@ public final class GameLoop {
         return gameSession.getCurrentState();
     }
 
-    public String toString() {
+    public String getCurrentSessionDescription() {
         return gameSession.toString();
     }
 
@@ -64,16 +61,18 @@ public final class GameLoop {
     private static final class GameTimeImpl implements GameTime {
 
         private final long updateIntervalInMillis;
+        private long totalElapsedFrameMillis;
         private long elapsedFrameInMillis;
 
-        public GameTimeImpl(long updateIntervalInMillis, long elapsedFrameInMillis) {
+        public GameTimeImpl(long updateIntervalInMillis) {
             this.updateIntervalInMillis = updateIntervalInMillis;
-            this.elapsedFrameInMillis = elapsedFrameInMillis;
+            this.totalElapsedFrameMillis = updateIntervalInMillis;
+            this.elapsedFrameInMillis = updateIntervalInMillis;
         }
 
-        GameTimeImpl setElapsedFrameInMillis(long elapsedFrameInMillis) {
+        void setElapsedFrameInMillis(long elapsedFrameInMillis) {
             this.elapsedFrameInMillis = elapsedFrameInMillis;
-            return this;
+            totalElapsedFrameMillis += elapsedFrameInMillis;
         }
 
         @Override
@@ -87,10 +86,16 @@ public final class GameLoop {
         }
 
         @Override
+        public long getTotalElapsedFramesInMillis() {
+            return totalElapsedFrameMillis;
+        }
+
+        @Override
         public String toString() {
             return "GameTimeImpl{"
-                    + "updateIntervalInMillis: \"" + getUpdateIntervalInMillis() + "\""
-                    + ", elapsedFrameInMillis: \"" + getElapsedFrameInMillis() + "\""
+                    + "updateIntervalInMillis: " + getUpdateIntervalInMillis()
+                    + ", elapsedFrameInMillis: " + getElapsedFrameInMillis()
+                    + ", totalElapsedFramesInMillis: " + getTotalElapsedFramesInMillis()
                     + "}";
         }
     }
@@ -101,8 +106,8 @@ public final class GameLoop {
         private final int numberUpdatePerSecond;
         private final int maxFrameSkip;
         private final Game game;
-        private volatile State currentState = State.STOP;
         private final GameTimeImpl gameTime;
+        private volatile State currentState = State.STOP;
 
         public GameSession(int numberUpdatePerSecond,
                            int maxFrameSkip,
@@ -110,19 +115,19 @@ public final class GameLoop {
             this.numberUpdatePerSecond = numberUpdatePerSecond;
             this.maxFrameSkip = maxFrameSkip;
             this.game = game;
-
-            long updateIntervalInMillis = 1000L / numberUpdatePerSecond;
-            gameTime = new GameTimeImpl(updateIntervalInMillis, updateIntervalInMillis);
+            this.gameTime = new GameTimeImpl(1000L / numberUpdatePerSecond);
         }
 
-        boolean prepareForStart() {
-            boolean canBeStarted = currentState == State.STOP;
-            if(canBeStarted) currentState = State.RUN;
-            return canBeStarted;
+        void start() {
+            if(currentState == State.STOP) {
+                currentState = State.RUN;
+                Thread thread = new Thread(this);
+                thread.start();
+            }
         }
 
         void stop() {
-            if(currentState != State.STOP) currentState = State.SHUTDOWN;
+            if(currentState == State.RUN) currentState = State.SHUTDOWN;
         }
 
         State getCurrentState() {
@@ -131,8 +136,9 @@ public final class GameLoop {
 
         @Override
         public void run() {
+            final SystemManager systemManager = game.getSystemManager();
+
             try {
-                final SystemManager systemManager = game.getSystemManager();
                 systemManager.updateGroup(Group.INIT.name(), gameTime);
 
                 final long updateInterval = gameTime.getUpdateIntervalInMillis();
@@ -153,8 +159,9 @@ public final class GameLoop {
 
                 systemManager.updateGroup(Group.DESTROY.name(), gameTime);
             } catch(Exception e) {
+                currentState = State.SHUTDOWN;
                 game.getEventManager().pushSingletonEvent(new Event(SingletonEvent.UNHANDLED_EXCEPTION.name(), e));
-                game.getSystemManager().updateGroup(Group.CRASH.name(), gameTime);
+                systemManager.updateGroup(Group.CRASH.name(), gameTime);
             } finally {
                 currentState = State.STOP;
             }
@@ -163,9 +170,9 @@ public final class GameLoop {
         @Override
         public String toString() {
             return "GameSession{"
-                    + "numberUpdatePerSecond: \"" + numberUpdatePerSecond + "\""
-                    + ", maxFrameSkip: \"" + maxFrameSkip + "\""
-                    + ", currentState: \"" + getCurrentState() + "\""
+                    + "numberUpdatePerSecond: " + numberUpdatePerSecond
+                    + ", maxFrameSkip: " + maxFrameSkip
+                    + ", currentState: " + getCurrentState()
                     + ", gameTime: " + gameTime
                     + "}";
         }
