@@ -52,7 +52,7 @@ public final class EntityManager {
             return new Entity(nextReusableEntityIndex, 0);
         } else {
             aliveEntitiesMask.set(nextReusableEntityIndex);
-            return unpack(entities[nextReusableEntityIndex]);
+            return new Entity(entities[nextReusableEntityIndex]);
         }
     }
 
@@ -82,7 +82,7 @@ public final class EntityManager {
      * менеджер сущностей - метод вернет мертвую сущность с {@link Entity#generation()} равным 0.
      */
     public Entity getEntityByIndex(int index) {
-        return index < size ? unpack(entities[index]) : new Entity(index, 0);
+        return index < size ? new Entity(entities[index]) : new Entity(index, 0);
     }
 
     /**
@@ -94,8 +94,8 @@ public final class EntityManager {
         DynamicArray<Entity> notAlive = new DynamicArray<>();
         for(int i = 0; i < size; ++i) {
             long packedEntity = entities[i];
-            if(aliveEntitiesMask.get(i)) alive.addLast(unpack(packedEntity));
-            else notAlive.addLast(unpack(packedEntity));
+            if(aliveEntitiesMask.get(i)) alive.addLast(new Entity(packedEntity));
+            else notAlive.addLast(new Entity(packedEntity));
         }
 
         return new Snapshot(alive, notAlive);
@@ -110,11 +110,11 @@ public final class EntityManager {
         aliveEntitiesMask = new Bits(calculateBitsCapacity(size) + 1);
 
         for(Entity entity : snapshot.alive()) {
-            entities[entity.index()] = pack(entity);
+            entities[entity.index()] = entity.asLong();
             aliveEntitiesMask.set(entity.index());
         }
         for(Entity entity : snapshot.notAlive()) {
-            entities[entity.index()] = pack(entity);
+            entities[entity.index()] = entity.asLong();
         }
     }
 
@@ -180,20 +180,8 @@ public final class EntityManager {
     }
 
 
-    private long pack(Entity entity) {
-        return pack(entity.index(), entity.generation());
-    }
-
     private long pack(int index, int generation) {
         return (long)index << 32 | (long)generation;
-    }
-
-    private Entity unpack(long entity) {
-        return new Entity(extractIndex(entity), extractGeneration(entity));
-    }
-
-    private int extractIndex(long entity) {
-        return (int) (entity >>> 32);
     }
 
     private int extractGeneration(long entity) {
