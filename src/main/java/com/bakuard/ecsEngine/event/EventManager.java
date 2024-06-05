@@ -6,11 +6,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-public class EventManager {
+public final class EventManager {
 
     private RingBuffer<Event> writeBuffer;
     private RingBuffer<Event> readBuffer;
-    private final HashMap<String, EventQueue> eventQueues;
+    private final HashMap<String, Topic> topic;
     private final Set<String> flags;
     private final HashMap<String, Event> singletonEvents;
     private final Object lock = new Object();
@@ -18,26 +18,27 @@ public class EventManager {
     public EventManager(int maxEventBufferSize) {
         writeBuffer = new RingBuffer<>(maxEventBufferSize);
         readBuffer = new RingBuffer<>(maxEventBufferSize);
-        eventQueues = new HashMap<>();
+        topic = new HashMap<>();
         flags = new HashSet<>();
         singletonEvents = new HashMap<>();
     }
 
-    public EventQueue registerEventQueue(String queueName, int maxSize, String... eventNames) {
-        EventQueue eventQueue = new EventQueue(queueName, maxSize, eventNames);
-        eventQueues.put(queueName, eventQueue);
-        return eventQueue;
+    public EventManager registerTopic(String topicName, int maxSize, String... eventNames) {
+        Topic topic = new Topic(topicName, maxSize, eventNames);
+        this.topic.put(topicName, topic);
+        return this;
     }
 
-    public EventQueue getEventQueue(String queueName) {
-        EventQueue eventQueue = eventQueues.get(queueName);
-        if(eventQueue == null) {
-            throw new UnknownEventQueueException("There is not EventQueue with name='" + queueName + '\'');
+    public Topic getTopic(String topicName) {
+        Topic topic = this.topic.get(topicName);
+        if(topic == null) {
+            throw new UnknownEventConsumerException("There is not EventConsumer with name='" + topicName + '\'');
         }
-        return eventQueue;
+        return topic;
     }
 
-    public void pushEventToBufferQueue(String eventName, Object eventPayload) {
+
+    public void publishEventToBuffer(String eventName, Object eventPayload) {
         synchronized(lock) {
             writeBuffer.addLastOrReplace(new Event(eventName, eventPayload));
         }
@@ -52,13 +53,14 @@ public class EventManager {
 
         while(!readBuffer.isEmpty()) {
             Event event = readBuffer.removeFirst();
-            pushEvent(event);
+            publishEvent(event);
         }
     }
 
-    public void pushEventToQueue(String eventName, Object eventPayload) {
-        pushEvent(new Event(eventName, eventPayload));
+    public void publishEvent(String eventName, Object eventPayload) {
+        publishEvent(new Event(eventName, eventPayload));
     }
+
 
     public void setFlag(String flagName) {
         flags.add(flagName);
@@ -72,11 +74,12 @@ public class EventManager {
         return flags.contains(flagName);
     }
 
-    public void pushSingletonEvent(Event event) {
-        singletonEvents.put(event.eventName(), event);
+
+    public void setSingletonEvent(Event event) {
+        singletonEvents.put(event.getName(), event);
     }
 
-    public Event pullSingletonEvent(String eventName) {
+    public Event getAndClearSingletonEvent(String eventName) {
         return singletonEvents.remove(eventName);
     }
 
@@ -85,9 +88,9 @@ public class EventManager {
     }
 
 
-    private void pushEvent(Event event) {
-        eventQueues.values().stream()
-                .filter(eventQueue -> eventQueue.contains(event.eventName()))
-                .forEach(eventQueue -> eventQueue.pushEvent(event));
+    private void publishEvent(Event event) {
+        topic.values().stream()
+                .filter(topic -> topic.canContainEventsWithName(event.getName()))
+                .forEach(topic -> topic.addEvent(event));
     }
 }
