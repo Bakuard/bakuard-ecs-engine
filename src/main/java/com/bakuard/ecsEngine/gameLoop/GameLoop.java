@@ -160,7 +160,7 @@ public final class GameLoop {
                 systemManager.updateGroup(Group.DESTROY.name(), gameTime);
             } catch(Exception e) {
                 currentState = State.SHUTDOWN;
-                game.getEventManager().pushSingletonEvent(new Event(SingletonEvent.UNHANDLED_EXCEPTION.name(), e));
+                game.getEventManager().setSingletonEvent(new Event(SingletonEvent.UNHANDLED_EXCEPTION.name(), e));
                 systemManager.updateGroup(Group.CRASH.name(), gameTime);
             } finally {
                 currentState = State.STOP;

@@ -5,13 +5,13 @@ import com.bakuard.collections.RingBuffer;
 
 import java.util.Set;
 
-public class EventQueue {
+public final class Topic {
 
     private final String name;
     private final RingBuffer<Event> events;
     private final Set<String> eventNames;
 
-    EventQueue(String name, int maxBufferSize, String... eventNames) {
+    Topic(String name, int maxBufferSize, String... eventNames) {
         this.name = name;
         this.events = new RingBuffer<>(maxBufferSize);
         this.eventNames = Set.of(eventNames);
@@ -21,11 +21,11 @@ public class EventQueue {
         return !events.isEmpty();
     }
 
-    public Event pullEvent() {
+    public Event consume() {
         return events.removeFirst();
     }
 
-    public ReadableLinearStructure<Event> getEvents() {
+    public ReadableLinearStructure<Event> getAllEvents() {
         return events;
     }
 
@@ -34,11 +34,11 @@ public class EventQueue {
     }
 
 
-    boolean contains(String eventName) {
+    boolean canContainEventsWithName(String eventName) {
         return eventNames.contains(eventName);
     }
 
-    void pushEvent(Event event) {
+    void addEvent(Event event) {
         events.addLastOrReplace(event);
     }
 }
