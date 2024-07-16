@@ -5,13 +5,13 @@ import com.bakuard.collections.RingBuffer;
 
 import java.util.Set;
 
-public final class Topic {
+public final class EventConsumer {
 
     private final String name;
     private final RingBuffer<Event> events;
     private final Set<String> eventNames;
 
-    Topic(String name, int maxBufferSize, String... eventNames) {
+    EventConsumer(String name, int maxBufferSize, String... eventNames) {
         this.name = name;
         this.events = new RingBuffer<>(maxBufferSize);
         this.eventNames = Set.of(eventNames);
