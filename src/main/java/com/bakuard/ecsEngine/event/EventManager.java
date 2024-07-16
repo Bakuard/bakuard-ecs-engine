@@ -1,5 +1,6 @@
 package com.bakuard.ecsEngine.event;
 
+import com.bakuard.collections.ReadableLinearStructure;
 import com.bakuard.collections.RingBuffer;
 
 import java.util.HashMap;
@@ -25,12 +26,16 @@ public final class EventManager {
         return this;
     }
 
-    public EventConsumer getEventConsumer(String consumerName) {
-        EventConsumer eventConsumer = this.consumers.get(consumerName);
-        if(eventConsumer == null) {
-            throw new UnknownEventConsumerException("There is not EventConsumer with name='" + consumerName + '\'');
-        }
-        return eventConsumer;
+    public boolean hasEvents(String consumerName) {
+        return getEventConsumer(consumerName).hasEvents();
+    }
+
+    public Event consume(String consumerName) {
+        return getEventConsumer(consumerName).consume();
+    }
+
+    public ReadableLinearStructure<Event> getAllEvents(String consumerName) {
+        return getEventConsumer(consumerName).getAllEvents();
     }
 
 
@@ -70,6 +75,14 @@ public final class EventManager {
         return singletonEvents.get(eventName);
     }
 
+
+    private EventConsumer getEventConsumer(String consumerName) {
+        EventConsumer eventConsumer = this.consumers.get(consumerName);
+        if(eventConsumer == null) {
+            throw new UnknownEventConsumerException("There is not EventConsumer with name='" + consumerName + '\'');
+        }
+        return eventConsumer;
+    }
 
     private void publishEvent(Event event) {
         consumers.values().stream()
