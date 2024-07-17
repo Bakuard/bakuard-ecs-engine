@@ -5,6 +5,8 @@ import com.bakuard.collections.RingBuffer;
 
 import java.util.HashMap;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public final class EventManager {
 
@@ -12,7 +14,7 @@ public final class EventManager {
     private RingBuffer<Event> readBuffer;
     private final HashMap<String, EventConsumer> consumers;
     private final HashMap<String, Event> singletonEvents;
-    private final Object lock = new Object();
+    private final Lock lock = new ReentrantLock();
 
     public EventManager(int maxEventBufferSize) {
         writeBuffer = new RingBuffer<>(maxEventBufferSize);
@@ -55,10 +57,13 @@ public final class EventManager {
     }
 
     public void flushBuffer() {
-        synchronized(lock) {
+        try {
+            lock.lock();
             RingBuffer<Event> temp = writeBuffer;
             writeBuffer = readBuffer;
             readBuffer = temp;
+        } finally {
+            lock.unlock();
         }
 
         while(!readBuffer.isEmpty()) {
@@ -96,7 +101,7 @@ public final class EventManager {
     }
 
 
-    private final class EventConsumer {
+    private static final class EventConsumer {
 
         private final EventsOverflowPolicy policy;
         private final RingBuffer<Event> events;
