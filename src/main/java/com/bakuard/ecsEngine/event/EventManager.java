@@ -4,6 +4,7 @@ import com.bakuard.collections.ReadableLinearStructure;
 import com.bakuard.collections.RingBuffer;
 
 import java.util.HashMap;
+import java.util.Set;
 
 public final class EventManager {
 
@@ -21,7 +22,11 @@ public final class EventManager {
     }
 
     public EventManager registerEventConsumer(String consumerName, int maxSize, String... eventNames) {
-        EventConsumer eventConsumer = new EventConsumer(consumerName, maxSize, eventNames);
+        return registerEventConsumer(consumerName, maxSize, EventsOverflowPolicy.REWRITE_OLDEST, eventNames);
+    }
+
+    public EventManager registerEventConsumer(String consumerName, int maxSize, EventsOverflowPolicy policy, String... eventNames) {
+        EventConsumer eventConsumer = new EventConsumer(maxSize, policy, eventNames);
         this.consumers.put(consumerName, eventConsumer);
         return this;
     }
@@ -39,10 +44,14 @@ public final class EventManager {
     }
 
 
-    public void publishEventToBuffer(String eventName, Object eventPayload) {
+    public void publishEventAsync(String eventName, Object eventPayload) {
         synchronized(lock) {
             writeBuffer.addLastOrReplace(new Event(eventName, eventPayload));
         }
+    }
+
+    public void publishEventSync(String eventName, Object eventPayload) {
+        publishEvent(new Event(eventName, eventPayload));
     }
 
     public void flushBuffer() {
@@ -56,10 +65,6 @@ public final class EventManager {
             Event event = readBuffer.removeFirst();
             publishEvent(event);
         }
-    }
-
-    public void publishEvent(String eventName, Object eventPayload) {
-        publishEvent(new Event(eventName, eventPayload));
     }
 
 
@@ -88,5 +93,44 @@ public final class EventManager {
         consumers.values().stream()
                 .filter(eventConsumer -> eventConsumer.canContainEventsWithName(event.getName()))
                 .forEach(eventConsumer -> eventConsumer.addEvent(event));
+    }
+
+
+    private final class EventConsumer {
+
+        private final EventsOverflowPolicy policy;
+        private final RingBuffer<Event> events;
+        private final Set<String> eventNames;
+
+        EventConsumer(int maxBufferSize, EventsOverflowPolicy policy, String... eventNames) {
+            this.policy = policy;
+            this.events = new RingBuffer<>(maxBufferSize);
+            this.eventNames = Set.of(eventNames);
+        }
+
+        boolean hasEvents() {
+            return !events.isEmpty();
+        }
+
+        Event consume() {
+            return events.removeFirst();
+        }
+
+        ReadableLinearStructure<Event> getAllEvents() {
+            return events;
+        }
+
+
+        boolean canContainEventsWithName(String eventName) {
+            return eventNames.contains(eventName);
+        }
+
+        void addEvent(Event event) {
+            if(policy == EventsOverflowPolicy.REWRITE_OLDEST) {
+                events.addLastOrReplace(event);
+            } else {
+                events.addLastOrSkip(event);
+            }
+        }
     }
 }
