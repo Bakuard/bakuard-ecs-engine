@@ -21,7 +21,8 @@ public final class GameLoop {
 
     public GameLoop(int numberUpdatePerSecond,
                     int maxFrameSkip,
-                    Game game) {
+                    Game game,
+                    UncaughtExceptionHandler handler) {
         if(numberUpdatePerSecond <= 0 || numberUpdatePerSecond > 1000) {
             throw new IllegalArgumentException(
                     "Expected: numberUpdatePerSecond > 0 || numberUpdatePerSecond <= 1000. " +
@@ -30,7 +31,7 @@ public final class GameLoop {
             throw new IllegalArgumentException("Expected: maxFrameSkip can't be less then zero. Actual: " + maxFrameSkip);
         }
 
-        gameSession = new GameSession(numberUpdatePerSecond, maxFrameSkip, game);
+        gameSession = new GameSession(numberUpdatePerSecond, maxFrameSkip, game, handler);
     }
 
     public void start() {
@@ -99,15 +100,18 @@ public final class GameLoop {
         private final int maxFrameSkip;
         private final Game game;
         private final GameTimeImpl gameTime;
+        private final UncaughtExceptionHandler handler;
         private volatile State currentState = State.STOP;
 
         public GameSession(int numberUpdatePerSecond,
                            int maxFrameSkip,
-                           Game game) {
+                           Game game,
+                           UncaughtExceptionHandler handler) {
             this.numberUpdatePerSecond = numberUpdatePerSecond;
             this.maxFrameSkip = maxFrameSkip;
             this.game = game;
             this.gameTime = new GameTimeImpl(1000L / numberUpdatePerSecond);
+            this.handler = handler;
         }
 
         void start() {
@@ -152,7 +156,7 @@ public final class GameLoop {
                 systemManager.updateGroup(SHUTDOWN_GROUP, gameTime);
             } catch(Exception e) {
                 currentState = State.SHUTDOWN;
-
+                handler.handle(gameTime, game, e);
             } finally {
                 currentState = State.STOP;
             }
