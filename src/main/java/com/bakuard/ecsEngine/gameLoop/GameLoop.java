@@ -1,28 +1,20 @@
 package com.bakuard.ecsEngine.gameLoop;
 
 import com.bakuard.ecsEngine.Game;
-import com.bakuard.ecsEngine.event.Event;
 import com.bakuard.ecsEngine.system.SystemManager;
 
 public final class GameLoop {
+
+    public static final String INIT_GROUP = "INIT_GROUP";
+    public static final String INPUT_GROUP = "INPUT_GROUP";
+    public static final String WORK_GROUP = "WORK_GROUP";
+    public static final String OUTPUT_GROUP = "OUTPUT_GROUP";
+    public static final String SHUTDOWN_GROUP = "SHUTDOWN_GROUP";
 
     public enum State {
         RUN,
         SHUTDOWN,
         STOP
-    }
-
-    public enum Group {
-        INIT,
-        INPUT,
-        WORK,
-        OUTPUT,
-        DESTROY,
-        CRASH
-    }
-
-    public enum SingletonEvent {
-        UNHANDLED_EXCEPTION
     }
 
     private final GameSession gameSession;
@@ -139,29 +131,28 @@ public final class GameLoop {
             final SystemManager systemManager = game.getSystemManager();
 
             try {
-                systemManager.updateGroup(Group.INIT.name(), gameTime);
+                systemManager.updateGroup(INIT_GROUP, gameTime);
 
                 final long updateInterval = gameTime.getUpdateIntervalInMillis();
                 long delta = gameTime.getUpdateIntervalInMillis(); //кол-во миллисекунд прошедшее с прошлого обновления
                 while(currentState == State.RUN) {
                     final long lastTime = java.lang.System.currentTimeMillis();
-                    systemManager.updateGroup(Group.INPUT.name(), gameTime);
+                    systemManager.updateGroup(INPUT_GROUP, gameTime);
                     for(int i = 0; delta >= updateInterval && i < maxFrameSkip; ++i) {
-                        systemManager.updateGroup(Group.WORK.name(), gameTime);
+                        systemManager.updateGroup(WORK_GROUP, gameTime);
                         delta -= updateInterval;
                     }
-                    systemManager.updateGroup(Group.OUTPUT.name(), gameTime);
+                    systemManager.updateGroup(OUTPUT_GROUP, gameTime);
                     final long elapsedTime = java.lang.System.currentTimeMillis() - lastTime;
                     delta += elapsedTime;
 
                     gameTime.setElapsedFrameInMillis(elapsedTime);
                 }
 
-                systemManager.updateGroup(Group.DESTROY.name(), gameTime);
+                systemManager.updateGroup(SHUTDOWN_GROUP, gameTime);
             } catch(Exception e) {
                 currentState = State.SHUTDOWN;
-                game.getEventManager().setSingletonEvent(new Event(SingletonEvent.UNHANDLED_EXCEPTION.name(), e));
-                systemManager.updateGroup(Group.CRASH.name(), gameTime);
+
             } finally {
                 currentState = State.STOP;
             }
