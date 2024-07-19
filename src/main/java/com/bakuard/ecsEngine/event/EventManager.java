@@ -10,8 +10,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public final class EventManager {
 
-    private RingBuffer<Event> writeBuffer;
-    private RingBuffer<Event> readBuffer;
+    private volatile RingBuffer<Event> writeBuffer;
+    private volatile RingBuffer<Event> readBuffer;
     private final HashMap<String, EventConsumer> consumers;
     private final HashMap<String, Event> singletonEvents;
     private final Lock lock = new ReentrantLock();
@@ -47,8 +47,11 @@ public final class EventManager {
 
 
     public void publishEventAsync(String eventName, Object eventPayload) {
-        synchronized(lock) {
+        try {
+            lock.lock();
             writeBuffer.addLastOrReplace(new Event(eventName, eventPayload));
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -56,7 +59,7 @@ public final class EventManager {
         publishEvent(new Event(eventName, eventPayload));
     }
 
-    public void flushBuffer() {
+    public void flushBufferOfAsyncEvents() {
         try {
             lock.lock();
             RingBuffer<Event> temp = writeBuffer;

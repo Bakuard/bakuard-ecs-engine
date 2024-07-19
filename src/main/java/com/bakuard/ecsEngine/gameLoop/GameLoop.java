@@ -1,6 +1,7 @@
 package com.bakuard.ecsEngine.gameLoop;
 
 import com.bakuard.ecsEngine.Game;
+import com.bakuard.ecsEngine.event.EventManager;
 import com.bakuard.ecsEngine.system.SystemManager;
 
 public final class GameLoop {
@@ -133,6 +134,7 @@ public final class GameLoop {
         @Override
         public void run() {
             final SystemManager systemManager = game.getSystemManager();
+            final EventManager eventManager = game.getEventManager();
 
             try {
                 systemManager.updateGroup(INIT_GROUP, gameTime);
@@ -141,6 +143,7 @@ public final class GameLoop {
                 long delta = gameTime.getUpdateIntervalInMillis(); //кол-во миллисекунд прошедшее с прошлого обновления
                 while(currentState == State.RUN) {
                     final long lastTime = java.lang.System.currentTimeMillis();
+                    eventManager.flushBufferOfAsyncEvents();
                     systemManager.updateGroup(INPUT_GROUP, gameTime);
                     for(int i = 0; delta >= updateInterval && i < maxFrameSkip; ++i) {
                         systemManager.updateGroup(WORK_GROUP, gameTime);
