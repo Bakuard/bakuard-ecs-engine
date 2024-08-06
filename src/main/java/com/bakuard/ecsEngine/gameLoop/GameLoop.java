@@ -137,6 +137,7 @@ public final class GameLoop {
             final EventManager eventManager = game.getEventManager();
 
             try {
+                eventManager.flushBufferOfAsyncEvents();
                 systemManager.updateGroup(INIT_GROUP, gameTime);
 
                 final long updateInterval = gameTime.getUpdateIntervalInMillis();
