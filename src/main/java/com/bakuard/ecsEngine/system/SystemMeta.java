@@ -6,10 +6,6 @@ public record SystemMeta(String systemName,
                          int groupSize,
                          System system) {
 
-    public SystemMeta(SystemMeta other) {
-        this(other.systemName, other.groupName, other.index, other.groupSize, other.system);
-    }
-
     public SystemMeta setSystem(System system) {
         return new SystemMeta(systemName, groupName, index, groupSize, system);
     }
