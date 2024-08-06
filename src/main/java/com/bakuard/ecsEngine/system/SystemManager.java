@@ -41,11 +41,12 @@ public final class SystemManager {
             registeredSystems.addLast(new RegisteredSystem(systemName, system));
         } else {
             registeredSystems.replace(systemIndex, new RegisteredSystem(systemName, system));
-            groups.forEach((groupName, group) -> group.replaceAll(
-                    (systemMeta, index) -> systemMeta.systemName().equals(systemName) ?
-                            systemMeta.setSystem(system) :
-                            systemMeta
-                    )
+            groups.replaceAll((key, group) ->
+                group.cloneAndMap(
+                        (systemMeta, index) -> systemMeta.systemName().equals(systemName) ?
+                                systemMeta.setSystem(system) :
+                                systemMeta
+                )
             );
         }
         return this;
@@ -61,9 +62,10 @@ public final class SystemManager {
      */
     public SystemManager appendToGroup(String groupName, String systemName) {
         System system = tryGetSystem(systemName);
-        DynamicArray<SystemMeta> group = getOrCreateGroup(groupName);
+        DynamicArray<SystemMeta> group = copyOrCreateGroup(groupName);
         group.addLast(new SystemMeta(systemName, groupName, group.size(), group.size() + 1, system));
-        updateIndexAndSizeForEachSystem(groupName);
+        updateIndexAndSizeForEachSystem(group);
+        groups.put(groupName, group);
         return this;
     }
 
@@ -77,9 +79,10 @@ public final class SystemManager {
      */
     public SystemManager insertIntoGroup(String groupName, String systemName, int index) {
         System system = tryGetSystem(systemName);
-        DynamicArray<SystemMeta> group = getOrCreateGroup(groupName);
+        DynamicArray<SystemMeta> group = copyOrCreateGroup(groupName);
         group.insert(index, new SystemMeta(systemName, groupName, index, group.size() + 1, system));
-        updateIndexAndSizeForEachSystem(groupName);
+        updateIndexAndSizeForEachSystem(group);
+        groups.put(groupName, group);
         return this;
     }
 
@@ -102,12 +105,12 @@ public final class SystemManager {
     /**
      * Удаляет систему из указанной группы.
      * @return ссылку на этот же объект.
-     * @throws UnknownGroupException если нет группы с указанным именем.
      */
     public SystemManager removeFromGroup(String groupName, String systemName) {
-        DynamicArray<SystemMeta> group = tryGetGroup(groupName);
+        DynamicArray<SystemMeta> group = copyOrCreateGroup(groupName);
         int wasDeleted = group.removeIf((systemMeta, index) -> systemMeta.systemName().equals(systemName));
-        if(wasDeleted > 0) updateIndexAndSizeForEachSystem(groupName);
+        if(wasDeleted > 0) updateIndexAndSizeForEachSystem(group);
+        groups.put(groupName, group);
         return this;
     }
 
@@ -116,19 +119,24 @@ public final class SystemManager {
      * @return ссылку на этот же объект.
      */
     public SystemManager removeSystem(String systemName) {
-        groups.keySet().forEach(groupName -> removeFromGroup(groupName, systemName));
         registeredSystems.removeIf((rs, index) -> rs.systemName().equals(systemName));
+        groups.replaceAll((key, group) -> {
+            DynamicArray<SystemMeta> newGroup = new DynamicArray<>(group);
+            removeFromGroup(newGroup, systemName);
+            return newGroup;
+        });
         return this;
     }
 
     /**
-     * Обновляет все системы в группе в порядке их добавления в группу.
-     * @throws UnknownGroupException если нет группы с указанным именем.
+     * Обновляет все системы в группе в порядке их добавления в группу. Если группы с таким именем
+     * не существует - метод ничего не делает.
      */
     public void updateGroup(String groupName, GameTime gameTime) {
-        DynamicArray<SystemMeta> group = tryGetGroup(groupName);
-        group.cloneAndMap((systemMeta, index) -> new SystemMeta(systemMeta))
-                .forEach(systemMeta -> systemMeta.system().update(systemMeta, gameTime, game));
+        DynamicArray<SystemMeta> group = groups.get(groupName);
+        if(group != null) {
+            group.forEach(systemMeta -> systemMeta.system().update(systemMeta, gameTime, game));
+        }
     }
 
 
@@ -140,20 +148,19 @@ public final class SystemManager {
         return regSystem.system();
     }
 
-    private DynamicArray<SystemMeta> tryGetGroup(String groupName) {
+    private void removeFromGroup(DynamicArray<SystemMeta> group, String systemName) {
+        int wasDeleted = group.removeIf((systemMeta, index) -> systemMeta.systemName().equals(systemName));
+        if(wasDeleted > 0) updateIndexAndSizeForEachSystem(group);
+    }
+
+    private DynamicArray<SystemMeta> copyOrCreateGroup(String groupName) {
         DynamicArray<SystemMeta> group = groups.get(groupName);
-        if(group == null) {
-            throw new UnknownGroupException("There is not group with name='" + groupName + '\'');
-        }
+        if(group == null) group = new DynamicArray<>();
+        else group = new DynamicArray<>(group);
         return group;
     }
 
-    private DynamicArray<SystemMeta> getOrCreateGroup(String groupName) {
-        return groups.computeIfAbsent(groupName, key -> new DynamicArray<>());
-    }
-
-    private void updateIndexAndSizeForEachSystem(String groupName) {
-        DynamicArray<SystemMeta> group = groups.get(groupName);
+    private void updateIndexAndSizeForEachSystem(DynamicArray<SystemMeta> group) {
         group.replaceAll((systemMeta, index) -> systemMeta.setGroupSize(group.size()).setIndex(index));
     }
 }
