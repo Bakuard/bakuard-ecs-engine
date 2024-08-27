@@ -1,8 +1,6 @@
-package com.bakuard.ecsEngine;
+package com.bakuard.ecsEngine.entity;
 
 import com.bakuard.collections.DynamicArray;
-import com.bakuard.ecsEngine.entity.Entity;
-import com.bakuard.ecsEngine.entity.EntityManager;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -168,6 +166,20 @@ class EntityManagerTest {
         boolean actual = manager.isAlive(newEntity);
 
         Assertions.assertThat(actual).isTrue();
+    }
+
+    @DisplayName("""
+            isAlive(entity):
+             entity is null
+             => return false
+            """)
+    @Test
+    void isAlive5() {
+        EntityManager manager = new EntityManager();
+
+        boolean actual = manager.isAlive(null);
+
+        Assertions.assertThat(actual).isFalse();
     }
 
     @DisplayName("snapshot():")

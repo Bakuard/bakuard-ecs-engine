@@ -68,10 +68,14 @@ public final class EntityManager {
     }
 
     /**
-     * Если указанная сущность не удалялась, то возвращает true, иначе - false.
+     * Сущность считается живой после её создания сущности через {@link #create()} и до её удаления
+     * через {@link #remove(Entity)}.<br/><br/>
+     * Особый случай: если entity равен null - метод вернет false.
      */
     public boolean isAlive(Entity entity) {
-        return entity.index() < size && extractGeneration(entities[entity.index()]) == entity.generation();
+        return entity != null
+                && entity.index() < size
+                && extractGeneration(entities[entity.index()]) == entity.generation();
     }
 
     /**
