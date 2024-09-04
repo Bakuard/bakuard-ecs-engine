@@ -46,7 +46,7 @@ public final class EventManager {
     }
 
 
-    public void publishEventAsync(String eventName, Object eventPayload) {
+    public void publishAsyncEvent(String eventName, Object eventPayload) {
         try {
             lock.lock();
             writeBuffer.addLastOrReplace(new Event(eventName, eventPayload));
@@ -55,7 +55,7 @@ public final class EventManager {
         }
     }
 
-    public void publishEventSync(String eventName, Object eventPayload) {
+    public void publishSyncEvent(String eventName, Object eventPayload) {
         publishEvent(new Event(eventName, eventPayload));
     }
 
