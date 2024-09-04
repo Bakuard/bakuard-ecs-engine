@@ -3,7 +3,7 @@ package com.bakuard.ecsEngine;
 import com.bakuard.collections.Bits;
 import com.bakuard.ecsEngine.component.CompPool;
 import com.bakuard.ecsEngine.component.CompsManager;
-import com.bakuard.ecsEngine.component.Filter;
+import com.bakuard.ecsEngine.component.EntityFilter;
 import com.bakuard.ecsEngine.component.TagsManager;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
@@ -155,13 +155,13 @@ public final class World {
         return haveEqualTags(firstEntity, secondEntity) && haveEqualComps(firstEntity, secondEntity);
     }
 
-    public Bits selectEntityIndexes(Filter filter) {
+    public Bits selectEntityIndexes(EntityFilter entityFilter) {
         Bits entityIndexes = entityManager.createAliveEntitiesMask();
 
-        compsManager.excludeEntityIndexesWithout(entityIndexes, filter.getAllComps());
-        tagsManager.excludeEntityIndexesWithout(entityIndexes, filter.getAllTags());
-        compsManager.excludeEntityIndexesWith(entityIndexes, filter.getNoneComps());
-        tagsManager.excludeEntityIndexesWith(entityIndexes, filter.getNoneTags());
+        compsManager.excludeEntityIndexesWithout(entityIndexes, entityFilter.getAllComps());
+        tagsManager.excludeEntityIndexesWithout(entityIndexes, entityFilter.getAllTags());
+        compsManager.excludeEntityIndexesWith(entityIndexes, entityFilter.getNoneComps());
+        tagsManager.excludeEntityIndexesWith(entityIndexes, entityFilter.getNoneTags());
 
         return entityIndexes;
     }
