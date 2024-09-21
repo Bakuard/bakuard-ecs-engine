@@ -5,44 +5,44 @@ import com.bakuard.collections.ReadableLinearStructure;
 
 import java.util.Objects;
 
-public final class Filter {
+public final class EntityFilter {
 
     private final ReadableLinearStructure<String> allTags;
     private final ReadableLinearStructure<String> noneTags;
     private final ReadableLinearStructure<Class<?>> allComps;
     private final ReadableLinearStructure<Class<?>> noneComps;
 
-    public Filter() {
+    public EntityFilter() {
         allTags = new DynamicArray<>();
         noneTags = new DynamicArray<>();
         allComps = new DynamicArray<>();
         noneComps = new DynamicArray<>();
     }
 
-    private Filter(ReadableLinearStructure<String> allTags,
-                  ReadableLinearStructure<String> noneTags,
-                  ReadableLinearStructure<Class<?>> allComps,
-                  ReadableLinearStructure<Class<?>> noneComps) {
+    private EntityFilter(ReadableLinearStructure<String> allTags,
+						 ReadableLinearStructure<String> noneTags,
+						 ReadableLinearStructure<Class<?>> allComps,
+						 ReadableLinearStructure<Class<?>> noneComps) {
         this.allTags = allTags;
         this.noneTags = noneTags;
         this.allComps = allComps;
         this.noneComps = noneComps;
     }
 
-    public Filter allComps(Class<?>... compTypes) {
-        return new Filter(allTags, noneTags, DynamicArray.of(compTypes), noneComps);
+    public EntityFilter allComps(Class<?>... compTypes) {
+        return new EntityFilter(allTags, noneTags, DynamicArray.of(compTypes), noneComps);
     }
 
-    public Filter noneComps(Class<?>... compTypes) {
-        return new Filter(allTags, noneTags, allComps, DynamicArray.of(compTypes));
+    public EntityFilter noneComps(Class<?>... compTypes) {
+        return new EntityFilter(allTags, noneTags, allComps, DynamicArray.of(compTypes));
     }
 
-    public Filter allTags(String... tags) {
-        return new Filter(DynamicArray.of(tags), noneTags, allComps, noneComps);
+    public EntityFilter allTags(String... tags) {
+        return new EntityFilter(DynamicArray.of(tags), noneTags, allComps, noneComps);
     }
 
-    public Filter noneTags(String... tags) {
-        return new Filter(allTags, DynamicArray.of(tags), allComps, noneComps);
+    public EntityFilter noneTags(String... tags) {
+        return new EntityFilter(allTags, DynamicArray.of(tags), allComps, noneComps);
     }
 
     public ReadableLinearStructure<Class<?>> getAllComps() {
@@ -65,11 +65,11 @@ public final class Filter {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Filter filter = (Filter) o;
-        return allTags.equals(filter.allTags)
-                && noneTags.equals(filter.noneTags)
-                && allComps.equals(filter.allComps)
-                && noneComps.equals(filter.noneComps);
+        EntityFilter entityFilter = (EntityFilter) o;
+        return allTags.equals(entityFilter.allTags)
+                && noneTags.equals(entityFilter.noneTags)
+                && allComps.equals(entityFilter.allComps)
+                && noneComps.equals(entityFilter.noneComps);
     }
 
     @Override

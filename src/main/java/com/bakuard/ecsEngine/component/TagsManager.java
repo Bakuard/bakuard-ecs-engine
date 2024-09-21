@@ -11,12 +11,12 @@ import java.util.Iterator;
 public final class TagsManager {
 
     private final HashMap<String, Bits> tagMasks;
-    private final HashMap<String, Entity> singletonTags;
+    private final HashMap<String, Entity> uniqueTags;
     private final EntityManager entityManager;
 
     public TagsManager(EntityManager entityManager) {
         this.tagMasks = new HashMap<>();
-        this.singletonTags = new HashMap<>();
+        this.uniqueTags = new HashMap<>();
         this.entityManager = entityManager;
     }
 
@@ -45,7 +45,7 @@ public final class TagsManager {
             tagMasks.forEach((key, bits) -> {
                 if(bits.inBound(entity.index())) bits.clear(entity.index());
             });
-            singletonTags.values().removeIf(entity::equals);
+            uniqueTags.values().removeIf(entity::equals);
         }
     }
 
@@ -115,22 +115,22 @@ public final class TagsManager {
     }
 
 
-    public void attachSingletonTag(Entity entity, String singletonTag) {
+    public void attachUniqueTag(Entity entity, String uniqueTag) {
         if(entityManager.isAlive(entity)) {
-            singletonTags.put(singletonTag, entity);
+            uniqueTags.put(uniqueTag, entity);
         }
     }
 
-    public void detachSingletonTag(String singletonTag) {
-        singletonTags.remove(singletonTag);
+    public void detachUniqueTag(String uniqueTag) {
+        uniqueTags.remove(uniqueTag);
     }
 
-    public Entity getEntityBySingletonTag(String singletonTag) {
-        return singletonTags.get(singletonTag);
+    public Entity getEntityByUniqueTag(String uniqueTag) {
+        return uniqueTags.get(uniqueTag);
     }
 
-    public boolean hasSingletonTag(Entity entity, String singletonTag) {
-        return entityManager.isAlive(entity) && entity.equals(singletonTags.get(singletonTag));
+    public boolean hasUniqueTag(Entity entity, String uniqueTag) {
+        return entityManager.isAlive(entity) && entity.equals(uniqueTags.get(uniqueTag));
     }
 
 

@@ -7,4 +7,14 @@ package com.bakuard.ecsEngine.entity;
  * @param generation индекс каждой сущности будет переиспользован после её удаления для создания новой
  *                   сущности. Указывает, какое кол-во раз данный индекс уже был переиспользован.
  */
-public record Entity(int index, int generation) {}
+public record Entity(int index, int generation) {
+
+    public Entity(long entityAsLong) {
+        this((int) (entityAsLong >>> 32), (int) entityAsLong);
+    }
+
+    public long asLong() {
+        return (long)index << 32 | (long)generation;
+    }
+
+}
