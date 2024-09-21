@@ -134,20 +134,20 @@ public final class World {
     }
 
 
-    public void attachSingletonTag(Entity entity, String singletonTag) {
-        tagsManager.attachSingletonTag(entity, singletonTag);
+    public void attachUniqueTag(Entity entity, String uniqueTag) {
+        tagsManager.attachUniqueTag(entity, uniqueTag);
     }
 
-    public void detachSingletonTag(String singletonTag) {
-        tagsManager.detachSingletonTag(singletonTag);
+    public void detachUniqueTag(String uniqueTag) {
+        tagsManager.detachUniqueTag(uniqueTag);
     }
 
-    public Entity getEntityBySingletonTag(String singletonTag) {
-        return tagsManager.getEntityBySingletonTag(singletonTag);
+    public Entity getEntityByUniqueTag(String uniqueTag) {
+        return tagsManager.getEntityByUniqueTag(uniqueTag);
     }
 
-    public boolean hasSingletonTag(Entity entity, String singletonTag) {
-        return tagsManager.hasSingletonTag(entity, singletonTag);
+    public boolean hasUniqueTag(Entity entity, String uniqueTag) {
+        return tagsManager.hasUniqueTag(entity, uniqueTag);
     }
 
 
