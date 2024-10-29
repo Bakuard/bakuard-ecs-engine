@@ -22,12 +22,12 @@ class EntityTest {
 
     @DisplayName("""
             Entity(entityAsLong):
-             entityAsLong = 0000_0000_0000_0000_0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0000
+             entityAsLong = 0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001
              => index = 1, generation = 0
             """)
     @Test
     void constructorWithLong2() {
-        long entityAsLong = 0b0000_0000_0000_0000_0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0000L;
+        long entityAsLong = 0b0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001L;
 
         Entity actual = new Entity(entityAsLong);
 
@@ -36,12 +36,12 @@ class EntityTest {
 
     @DisplayName("""
             Entity(entityAsLong):
-             entityAsLong = 0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001
+             entityAsLong = 0000_0000_0000_0000_0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0000
              => index = 0, generation = 1
             """)
     @Test
     void constructorWithLong3() {
-        long entityAsLong = 0b0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001L;
+        long entityAsLong = 0b0000_0000_0000_0000_0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0000L;
 
         Entity actual = new Entity(entityAsLong);
 
