@@ -3,8 +3,7 @@ package com.bakuard.ecsEngine.component;
 import com.bakuard.collections.Bits;
 import com.bakuard.ecsEngine.entity.Entity;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 public final class SparseSet implements CompPool {
@@ -18,6 +17,8 @@ public final class SparseSet implements CompPool {
     private int size;
     private final Bits entityIndexes;
 
+    private int actualModCount;
+
     public SparseSet() {
         entityIndexToComp = new int[INIT_CAPACITY];
         comps = new Object[INIT_CAPACITY];
@@ -29,6 +30,8 @@ public final class SparseSet implements CompPool {
 
     @Override
     public void attachComp(Entity entity, Object component) {
+        ++actualModCount;
+
         int oldSize = size;
         growSparseArray(entity.index() + 1);
         growDensityArrays(size + 1);
@@ -41,6 +44,8 @@ public final class SparseSet implements CompPool {
 
     @Override
     public void detachComp(Entity entity) {
+        ++actualModCount;
+
         final int compIndex = entity.index() < entityIndexToComp.length ? entityIndexToComp[entity.index()] : -1;
         if(compIndex > -1) {
             final int lastCompsIndex = --size;
@@ -58,6 +63,8 @@ public final class SparseSet implements CompPool {
     }
 
     public void swap(Entity first, Entity second) {
+        ++actualModCount;
+
         if(first.index() < entityIndexToComp.length && second.index() < entityIndexToComp.length) {
             final int firstIndex = entityIndexToComp[first.index()];
             final int secondIndex = entityIndexToComp[second.index()];
@@ -66,6 +73,16 @@ public final class SparseSet implements CompPool {
                 swapEntities(firstIndex, secondIndex);
             }
         }
+    }
+
+    public Entity getEntityFromDensityArray(int index) {
+        assertInBound(index);
+        return entities[index];
+    }
+
+    public <T> T getCompFromDensityArray(int index) {
+        assertInBound(index);
+        return (T)comps[index];
     }
 
     @Override
@@ -90,6 +107,11 @@ public final class SparseSet implements CompPool {
         for(int i = size - 1; i >= 0; --i) {
             consumer.accept(entities[i], (T) comps[i]);
         }
+    }
+
+    @Override
+    public <T> EntryIterator<T> iterator() {
+        return new EntryIteratorImpl<T>(actualModCount, size);
     }
 
     @Override
@@ -163,6 +185,12 @@ public final class SparseSet implements CompPool {
         }
     }
 
+    private void assertInBound(int index) {
+        if(index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException("Expected: index >= 0 and index < size. Actual: index = %d, size = %d".formatted(index, size));
+        }
+    }
+
 
     private void swapEntityIndexToComp(int firstIndex, int secondIndex) {
         int firstValue = entityIndexToComp[firstIndex];
@@ -185,5 +213,48 @@ public final class SparseSet implements CompPool {
         }
         sb.append(']');
         return sb.toString();
+    }
+
+
+    private class EntryIteratorImpl<E> implements EntryIterator<E> {
+        private final int expectedModCount;
+        private final int itemsNumber;
+        private int currentIndex = -1;
+        private Entity recentEntity;
+        private E recentComp;
+
+        public EntryIteratorImpl(int expectedModCount, int itemsNumber) {
+            this.expectedModCount = expectedModCount;
+            this.itemsNumber = itemsNumber;
+        }
+
+        @Override
+        public boolean next() {
+            assertCompPoolWasNotBeenChanged();
+            boolean hasNext = ++currentIndex < itemsNumber;
+            if(hasNext) {
+                recentEntity = entities[currentIndex];
+                recentComp = (E)comps[currentIndex];
+            } else {
+                recentEntity = null;
+                recentComp = null;
+            }
+            return hasNext;
+        }
+
+        @Override
+        public Entity recentEntity() {
+            return recentEntity;
+        }
+
+        @Override
+        public E recentComp() {
+            return recentComp;
+        }
+
+        private void assertCompPoolWasNotBeenChanged() {
+            if(actualModCount != expectedModCount)
+                throw new ConcurrentModificationException();
+        }
     }
 }
