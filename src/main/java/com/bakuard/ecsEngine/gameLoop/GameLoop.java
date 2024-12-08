@@ -91,6 +91,16 @@ public final class GameLoop {
 		public long getTotalElapsedFrames() {
 			return totalElapsedFrames;
 		}
+
+		@Override
+		public String toString() {
+			return "GameTimeImpl{"
+						   + "updateIntervalInMillis: " + updateIntervalInMillis
+						   + ", totalElapsedFramesMillis: " + totalElapsedFramesMillis
+						   + ", elapsedFrameInMillis: " + elapsedFrameInMillis
+						   + ", totalElapsedFrames: " + totalElapsedFrames
+						   + "}";
+		}
 	}
 
 
