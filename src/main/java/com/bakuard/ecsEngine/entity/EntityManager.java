@@ -68,7 +68,7 @@ public final class EntityManager {
     }
 
     /**
-     * Сущность считается живой после её создания сущности через {@link #create()} и до её удаления
+     * Сущность считается живой после её создания через {@link #create()} и до её удаления
      * через {@link #remove(Entity)}.<br/><br/>
      * Особый случай: если entity равен null - метод вернет false.
      */
@@ -185,11 +185,11 @@ public final class EntityManager {
 
 
     private long pack(int index, int generation) {
-        return (long)index << 32 | (long)generation;
+        return (long)generation << 32 | (long)index;
     }
 
     private int extractGeneration(long entity) {
-        return (int) entity;
+        return (int)(entity >>> 32);
     }
 
     private void growToIndex(int index) {

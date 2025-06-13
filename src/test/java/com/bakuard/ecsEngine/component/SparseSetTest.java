@@ -6,6 +6,9 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 class SparseSetTest {
 
     public record Comp(String name){}
@@ -324,4 +327,112 @@ class SparseSetTest {
 
         Assertions.assertThat(actual).isEqualTo(100);
     }
+
+	@DisplayName("""
+            iterator():
+             sparse set is empty
+             => next return false, recentXXX methods return null
+            """)
+	@Test
+	public void iterator1() {
+		SparseSet sparseSet = new SparseSet();
+
+		CompPool.EntryIterator<Object> iterator = sparseSet.iterator();
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(iterator.next()).isFalse();
+		assertions.assertThat(iterator.recentEntity()).isNull();
+		assertions.assertThat(iterator.recentComp()).isNull();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+            iterator():
+             sparse set contains one comp
+             => next return true for item then false, recentXXX methods return entry then null
+            """)
+	@Test
+	public void iterator2() {
+		SparseSet sparseSet = new SparseSet();
+		Entity entity = new Entity(1, 0);
+		sparseSet.attachComp(entity, "some comp");
+
+		CompPool.EntryIterator<String> iterator = sparseSet.iterator();
+		List<String> actualComps = new ArrayList<>();
+		List<Entity> actualEntities = new ArrayList<>();
+		while(iterator.next()) {
+			actualEntities.add(iterator.recentEntity());
+			actualComps.add(iterator.recentComp());
+		}
+		actualEntities.add(iterator.recentEntity());
+		actualComps.add(iterator.recentComp());
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(actualComps).containsExactly("some comp", null);
+		assertions.assertThat(actualEntities).containsExactly(entity, null);
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+            iterator():
+             sparse set contains several comps
+             => next return true for each item then false, recentXXX methods return each entry then null
+            """)
+	@Test
+	public void iterator3() {
+		SparseSet sparseSet = new SparseSet();
+		Entity entity1 = new Entity(1, 0);
+		Entity entity2 = new Entity(2, 0);
+		Entity entity3 = new Entity(3, 0);
+		Entity entity4 = new Entity(4, 0);
+		Entity entity5 = new Entity(5, 0);
+		sparseSet.attachComp(entity1, "comp1");
+		sparseSet.attachComp(entity2, "comp2");
+		sparseSet.attachComp(entity3, "comp3");
+		sparseSet.attachComp(entity4, "comp4");
+		sparseSet.attachComp(entity5, "comp5");
+
+		CompPool.EntryIterator<String> iterator = sparseSet.iterator();
+		List<String> actualComps = new ArrayList<>();
+		List<Entity> actualEntities = new ArrayList<>();
+		while(iterator.next()) {
+			actualEntities.add(iterator.recentEntity());
+			actualComps.add(iterator.recentComp());
+		}
+		actualEntities.add(iterator.recentEntity());
+		actualComps.add(iterator.recentComp());
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(actualComps).containsExactly("comp1", "comp2", "comp3", "comp4", "comp5", null);
+		assertions.assertThat(actualEntities).containsExactly(entity1, entity2, entity3, entity4, entity5, null);
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+            iterator():
+             sparse set contains several comps,
+             try get entry without calling next()
+             => recentXXX must return null
+            """)
+	@Test
+	public void iterator4() {
+		SparseSet sparseSet = new SparseSet();
+		Entity entity1 = new Entity(1, 0);
+		Entity entity2 = new Entity(2, 0);
+		Entity entity3 = new Entity(3, 0);
+		Entity entity4 = new Entity(4, 0);
+		Entity entity5 = new Entity(5, 0);
+		sparseSet.attachComp(entity1, "comp1");
+		sparseSet.attachComp(entity2, "comp2");
+		sparseSet.attachComp(entity3, "comp3");
+		sparseSet.attachComp(entity4, "comp4");
+		sparseSet.attachComp(entity5, "comp5");
+
+		CompPool.EntryIterator<Object> iterator = sparseSet.iterator();
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(iterator.recentEntity()).isNull();
+		assertions.assertThat(iterator.recentComp()).isNull();
+		assertions.assertAll();
+	}
 }

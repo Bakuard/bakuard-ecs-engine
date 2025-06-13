@@ -10,11 +10,11 @@ package com.bakuard.ecsEngine.entity;
 public record Entity(int index, int generation) {
 
     public Entity(long entityAsLong) {
-        this((int) (entityAsLong >>> 32), (int) entityAsLong);
+        this((int) entityAsLong, (int) (entityAsLong >>> 32));
     }
 
     public long asLong() {
-        return (long)index << 32 | (long)generation;
+        return (long)generation << 32 | (long)index;
     }
 
 }
