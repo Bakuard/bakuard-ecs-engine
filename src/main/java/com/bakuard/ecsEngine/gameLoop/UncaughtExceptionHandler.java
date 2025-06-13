@@ -1,9 +1,13 @@
 package com.bakuard.ecsEngine.gameLoop;
 
-import com.bakuard.ecsEngine.Game;
+import com.bakuard.ecsEngine.World;
+import com.bakuard.ecsEngine.event.EventManager;
 
 public interface UncaughtExceptionHandler {
 
-    public void handle(GameTime gameTime, Game game, Throwable exception);
-    
+	public void handle(GameTime gameTime,
+					   EventManager eventManager,
+					   World world,
+					   Throwable exception);
+
 }

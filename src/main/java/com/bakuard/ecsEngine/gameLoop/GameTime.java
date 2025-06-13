@@ -2,11 +2,11 @@ package com.bakuard.ecsEngine.gameLoop;
 
 public interface GameTime {
 
-	public long getElapsedFrameInMillis();
+	public long getLastFrameInMillis();
 
 	public long getUpdateIntervalInMillis();
 
-	public long getTotalElapsedFramesInMillis();
+	public long getTotalElapsedTimeInMillis();
 
-	public long getTotalElapsedFrames();
+	public long getTotalElapsedTimeInFrames();
 }

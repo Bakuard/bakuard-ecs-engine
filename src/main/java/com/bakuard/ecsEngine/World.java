@@ -156,7 +156,7 @@ public final class World {
     }
 
     public Bits selectEntityIndexes(EntityFilter entityFilter) {
-        Bits entityIndexes = entityManager.createAliveEntitiesMask();
+        Bits entityIndexes = new Bits(entityManager.getAliveEntitiesMask());
 
         compsManager.excludeEntityIndexesWithout(entityIndexes, entityFilter.getAllComps());
         tagsManager.excludeEntityIndexesWithout(entityIndexes, entityFilter.getAllTags());
