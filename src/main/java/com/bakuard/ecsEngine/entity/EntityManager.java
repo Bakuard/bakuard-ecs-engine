@@ -16,17 +16,6 @@ public final class EntityManager {
 
 	private static final int MIN_BITS_SIZE = 256;
 
-	/**
-	 * Снимок состояния {@link EntityManager}. Подробнее см. {@link EntityManager#snapshot()}.
-	 * @param alive все сущности, для которых вызов {@link EntityManager#isAlive(Entity)} на момент
-	 *              создания этого снимка возвращал true.
-	 * @param notAlive все сущности, для которых вызов {@link EntityManager#isAlive(Entity)} на момент
-	 *                 создания этого снимка возвращал false.
-	 */
-	public record Snapshot(ReadableLinearStructure<Entity> alive,
-						   ReadableLinearStructure<Entity> notAlive) {}
-
-
 	private long[] entities;
 	private int size;
 	private Bits aliveEntitiesMask;
@@ -45,16 +34,15 @@ public final class EntityManager {
 	public Entity create() {
 		int nextReusableEntityIndex = aliveEntitiesMask.nextClearBit(0);
 
-		if(nextReusableEntityIndex >= size) {
-			growToIndex(nextReusableEntityIndex);
-			aliveEntitiesMask.growToIndex(calculateBitsCapacity(nextReusableEntityIndex));
-			aliveEntitiesMask.set(nextReusableEntityIndex);
-			entities[nextReusableEntityIndex] = pack(nextReusableEntityIndex, 0);
-			return new Entity(nextReusableEntityIndex, 0);
-		} else {
+		if(nextReusableEntityIndex < size) {
 			aliveEntitiesMask.set(nextReusableEntityIndex);
 			return Entity.fromLong(entities[nextReusableEntityIndex]);
 		}
+
+		growToIndex(nextReusableEntityIndex);
+		aliveEntitiesMask.set(nextReusableEntityIndex);
+		entities[nextReusableEntityIndex] = pack(nextReusableEntityIndex, 0);
+		return new Entity(nextReusableEntityIndex, 0);
 	}
 
 	/**
@@ -69,9 +57,36 @@ public final class EntityManager {
 	}
 
 	/**
-	 * Сущность считается живой после её создания через {@link #create()} и до её удаления
-	 * через {@link #remove(Entity)}.<br/><br/>
+	 * Добавляет указанную сущность. Если сущность с таким же индексом уже существует - перезаписывает её. После
+	 * выполнения метода сущность будет живой ({@link #isAlive(Entity)}). Если entity равен null - метод ничего не делает.
+	 *
+	 * <p>
+	 * <b>НАЗНАЧЕНИЕ:</b> предназначен для восстановления состояния {@link EntityManager} при загрузке игры.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>ВНИМАНИЕ!</b> Данный метод не делает никаких проверок для значений {@link Entity#index()} и {@link Entity#generation()}.
+	 * Использование этого метода может привести к излишнему расходу памяти (при очень больших значениях {@link Entity#index()})
+	 * и неожиданным ошибкам.
+	 * </p>
+	 * @param entity добавляемая сущность.
+	 */
+	public void addOrReplaceUnsafe(Entity entity) {
+		if(entity == null) return;
+
+		final int entityIndex = entity.index();
+		if(entityIndex >= size) growToIndex(entityIndex);
+
+		aliveEntitiesMask.set(entityIndex);
+		entities[entityIndex] = pack(entityIndex, entity.generation());
+	}
+
+	/**
+	 * Сущность считается живой после её создания через {@link #create()} или {@link #addOrReplaceUnsafe(Entity)}
+	 * и до её удаления через {@link #remove(Entity)}.
+	 * <p>
 	 * Особый случай: если entity равен null - метод вернет false.
+	 * </p>
 	 */
 	public boolean isAlive(Entity entity) {
 		return entity != null
@@ -88,39 +103,6 @@ public final class EntityManager {
 	 */
 	public Entity getEntityByIndex(int index) {
 		return index < size ? Entity.fromLong(entities[index]) : new Entity(index, 0);
-	}
-
-	/**
-	 * Создает снимок текущего состояния данного менеджера сущностей. Снимок представляет собой
-	 * все созданные (включая удаленные) сущности через данный менеджер сущностей.
-	 */
-	public Snapshot snapshot() {
-		DynamicArray<Entity> alive = new DynamicArray<>();
-		DynamicArray<Entity> notAlive = new DynamicArray<>();
-		for(int i = 0; i < size; ++i) {
-			long packedEntity = entities[i];
-			if(aliveEntitiesMask.get(i)) alive.addLast(Entity.fromLong(packedEntity));
-			else notAlive.addLast(Entity.fromLong(packedEntity));
-		}
-
-		return new Snapshot(alive, notAlive);
-	}
-
-	/**
-	 * Заменяет текущее состояние менеджера сущностей на состояние сохраненное в snapshot.
-	 */
-	public void restore(Snapshot snapshot) {
-		size = snapshot.alive().size() + snapshot.notAlive().size();
-		entities = new long[size];
-		aliveEntitiesMask = new Bits(calculateBitsCapacity(size) + 1);
-
-		for(Entity entity : snapshot.alive()) {
-			entities[entity.index()] = Entity.toLong(entity);
-			aliveEntitiesMask.set(entity.index());
-		}
-		for(Entity entity : snapshot.notAlive()) {
-			entities[entity.index()] = Entity.toLong(entity);
-		}
 	}
 
 	/**
@@ -193,11 +175,14 @@ public final class EntityManager {
 		return (int)(entity >>> 32);
 	}
 
+
 	private void growToIndex(int index) {
 		size = index + 1;
 		if(size > entities.length) {
 			entities = Arrays.copyOf(entities, calculateCapacity(size));
 		}
+
+		aliveEntitiesMask.growToIndex(calculateBitsCapacity(index));
 	}
 
 	private int calculateCapacity(int size) {
