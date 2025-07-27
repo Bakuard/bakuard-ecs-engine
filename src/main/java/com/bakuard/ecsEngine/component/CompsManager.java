@@ -5,9 +5,7 @@ import com.bakuard.collections.ReadableLinearStructure;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Objects;
+import java.util.*;
 
 public final class CompsManager {
 
@@ -149,6 +147,10 @@ public final class CompsManager {
 
 	public <S extends CompPool> S getCompPool(String poolName) {
 		return (S) compPools.get(poolName);
+	}
+
+	public Set<String> getAllCompPoolNames() {
+		return new HashSet<>(compPools.keySet());
 	}
 
 

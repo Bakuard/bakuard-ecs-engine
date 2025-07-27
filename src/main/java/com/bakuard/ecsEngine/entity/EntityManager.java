@@ -1,9 +1,7 @@
 package com.bakuard.ecsEngine.entity;
 
 import com.bakuard.collections.Bits;
-import com.bakuard.collections.DynamicArray;
 import com.bakuard.collections.ReadableBits;
-import com.bakuard.collections.ReadableLinearStructure;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -18,7 +16,7 @@ public final class EntityManager {
 
 	private long[] entities;
 	private int size;
-	private Bits aliveEntitiesMask;
+	private final Bits aliveEntitiesMask;
 
 	public EntityManager() {
 		entities = new long[10];

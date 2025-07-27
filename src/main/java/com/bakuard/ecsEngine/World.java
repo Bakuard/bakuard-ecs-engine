@@ -8,16 +8,30 @@ import com.bakuard.ecsEngine.component.TagsManager;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
 
+import java.util.Iterator;
+import java.util.Set;
+
 public final class World {
 
-	private final EntityManager entityManager;
-	private final CompsManager compsManager;
-	private final TagsManager tagsManager;
+	private EntityManager entityManager;
+	private CompsManager compsManager;
+	private TagsManager tagsManager;
 
 	public World() {
 		this.entityManager = new EntityManager();
 		this.compsManager = new CompsManager(entityManager);
 		this.tagsManager = new TagsManager(entityManager);
+	}
+
+	public void reloadAll(Iterator<Entity> entityIterator) {
+		this.entityManager = new EntityManager();
+		this.compsManager = new CompsManager(entityManager);
+		this.tagsManager = new TagsManager(entityManager);
+
+		while(entityIterator.hasNext()) {
+			Entity entity = entityIterator.next();
+			this.entityManager.addOrReplaceUnsafe(entity);
+		}
 	}
 
 
@@ -31,10 +45,6 @@ public final class World {
 		return entity;
 	}
 
-	public Entity getEntityByIndex(int index) {
-		return entityManager.getEntityByIndex(index);
-	}
-
 	public void remove(Entity entity) {
 		compsManager.detachAllComps(entity);
 		tagsManager.detachAllTags(entity);
@@ -44,6 +54,10 @@ public final class World {
 
 	public boolean isAlive(Entity entity) {
 		return entityManager.isAlive(entity);
+	}
+
+	public Entity getEntityByIndex(int index) {
+		return entityManager.getEntityByIndex(index);
 	}
 
 
@@ -163,6 +177,11 @@ public final class World {
 	}
 
 
+	public Set<String> getAllTags() {
+		return tagsManager.getAllTags();
+	}
+
+
 	public void attachUniqueTag(Entity entity, String uniqueTag) {
 		tagsManager.attachUniqueTag(entity, uniqueTag);
 	}
@@ -212,5 +231,9 @@ public final class World {
 
 	public <S extends CompPool> S getCompPool(String poolName) {
 		return compsManager.getCompPool(poolName);
+	}
+
+	public Set<String> getAllCompPoolNames() {
+		return compsManager.getAllCompPoolNames();
 	}
 }

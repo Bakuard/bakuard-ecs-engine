@@ -6,18 +6,20 @@ import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 public final class TagsManager {
 
-	private final HashMap<String, Bits> tagMasks;
 	private final EntityManager entityManager;
+	private final HashMap<String, Bits> tagMasks;
 	private final HashMap<String, Entity> entityByUniqueTag;
 	private final HashMap<Entity, String> uniqueTagByEntity;
 
 	public TagsManager(EntityManager entityManager) {
-		this.tagMasks = new HashMap<>();
 		this.entityManager = entityManager;
+		this.tagMasks = new HashMap<>();
 		this.entityByUniqueTag = new HashMap<>();
 		this.uniqueTagByEntity = new HashMap<>();
 	}
@@ -91,6 +93,11 @@ public final class TagsManager {
 		}
 
 		return result || (!isFirstAlive && !isSecondAlive);
+	}
+
+
+	public Set<String> getAllTags() {
+		return new HashSet<>(tagMasks.keySet());
 	}
 
 
