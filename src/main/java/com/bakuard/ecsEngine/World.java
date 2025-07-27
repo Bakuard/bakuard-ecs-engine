@@ -51,6 +51,10 @@ public final class World {
 		compsManager.attachComp(entity, comp);
 	}
 
+	public void attachComp(Entity entity, String poolName, Object comp) {
+		compsManager.attachComp(entity, poolName, comp);
+	}
+
 	public void attachComps(Entity entity, Object... comps) {
 	   compsManager.attachComps(entity, comps);
 	}
@@ -59,8 +63,16 @@ public final class World {
 		compsManager.detachComp(entity, compType);
 	}
 
+	public void detachComp(Entity entity, String poolName) {
+		compsManager.detachComp(entity, poolName);
+	}
+
 	public void detachComps(Entity entity, Class<?>... compTypes) {
 		compsManager.detachComps(entity, compTypes);
+	}
+
+	public void detachComps(Entity entity, String... poolNames) {
+		compsManager.detachComps(entity, poolNames);
 	}
 
 	public void detachAllComps(Entity entity) {
@@ -76,16 +88,32 @@ public final class World {
 		return compsManager.getComp(entity, compType);
 	}
 
+	public <T> T getComp(Entity entity, String poolName) {
+		return compsManager.getComp(entity, poolName);
+	}
+
 	public <T> boolean hasComp(Entity entity, Class<T> compType) {
 		return compsManager.hasComp(entity, compType);
+	}
+
+	public boolean hasComp(Entity entity, String poolName) {
+		return compsManager.hasComp(entity, poolName);
 	}
 
 	public boolean hasAllComps(Entity entity, Class<?>... compTypes) {
 		return compsManager.hasAllComps(entity, compTypes);
 	}
 
+	public boolean hasAllComps(Entity entity, String... poolNames) {
+		return compsManager.hasAllComps(entity, poolNames);
+	}
+
 	public boolean hasNoneOfComps(Entity entity, Class<?>... compTypes) {
 		return compsManager.hasNoneOfComps(entity, compTypes);
+	}
+
+	public boolean hasNoneOfComps(Entity entity, String... poolNames) {
+		return compsManager.hasNoneOfComps(entity, poolNames);
 	}
 
 	public boolean haveEqualComps(Entity firstEntity, Entity secondEntity) {
@@ -164,6 +192,7 @@ public final class World {
 		return haveEqualTags(firstEntity, secondEntity) && haveEqualComps(firstEntity, secondEntity);
 	}
 
+
 	public Bits selectEntityIndexes(EntityFilter entityFilter) {
 		Bits entityIndexes = new Bits(entityManager.getAliveEntitiesMask());
 
@@ -176,12 +205,12 @@ public final class World {
 	}
 
 
-	public <T> World registerCompPool(CompPool pool, Class<T> compType) {
-		compsManager.registerCompPool(pool, compType);
+	public World registerCompPool(CompPool pool, String poolName) {
+		compsManager.registerCompPool(pool, poolName);
 		return this;
 	}
 
-	public <T, S extends CompPool> S getCompPool(Class<T> compType) {
-		return compsManager.getCompPool(compType);
+	public <S extends CompPool> S getCompPool(String poolName) {
+		return compsManager.getCompPool(poolName);
 	}
 }

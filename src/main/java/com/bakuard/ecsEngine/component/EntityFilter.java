@@ -8,12 +8,12 @@ import java.util.Objects;
 public final class EntityFilter {
 
 	private static final DynamicArray<String> emptyTags = new DynamicArray<>();
-	private static final DynamicArray<Class<?>> emptyComps = new DynamicArray<>();
+	private static final DynamicArray<String> emptyComps = new DynamicArray<>();
 
 	private final DynamicArray<String> allTags;
 	private final DynamicArray<String> noneTags;
-	private final DynamicArray<Class<?>> allComps;
-	private final DynamicArray<Class<?>> noneComps;
+	private final DynamicArray<String> allComps;
+	private final DynamicArray<String> noneComps;
 
 	public EntityFilter() {
 		this(emptyTags, emptyTags, emptyComps, emptyComps);
@@ -21,8 +21,8 @@ public final class EntityFilter {
 
 	private EntityFilter(DynamicArray<String> allTags,
 						 DynamicArray<String> noneTags,
-						 DynamicArray<Class<?>> allComps,
-						 DynamicArray<Class<?>> noneComps) {
+						 DynamicArray<String> allComps,
+						 DynamicArray<String> noneComps) {
 		this.allTags = allTags;
 		this.noneTags = noneTags;
 		this.allComps = allComps;
@@ -30,11 +30,21 @@ public final class EntityFilter {
 	}
 
 	public EntityFilter allComps(Class<?>... compTypes) {
-		return new EntityFilter(allTags, noneTags, DynamicArray.of(compTypes), noneComps);
+		DynamicArray<String> allComps = DynamicArray.of(compTypes).cloneAndMap((Class<?> type, int i) -> type.getName());
+		return new EntityFilter(allTags, noneTags, allComps, noneComps);
+	}
+
+	public EntityFilter allComps(String... poolNames) {
+		return new EntityFilter(allTags, noneTags, DynamicArray.of(poolNames), noneComps);
 	}
 
 	public EntityFilter noneComps(Class<?>... compTypes) {
-		return new EntityFilter(allTags, noneTags, allComps, DynamicArray.of(compTypes));
+		DynamicArray<String> noneComps = DynamicArray.of(compTypes).cloneAndMap((Class<?> type, int i) -> type.getName());
+		return new EntityFilter(allTags, noneTags, allComps, noneComps);
+	}
+
+	public EntityFilter noneComps(String... poolNames) {
+		return new EntityFilter(allTags, noneTags, allComps, DynamicArray.of(poolNames));
 	}
 
 	public EntityFilter allTags(String... tags) {
@@ -45,11 +55,11 @@ public final class EntityFilter {
 		return new EntityFilter(allTags, DynamicArray.of(tags), allComps, noneComps);
 	}
 
-	public ReadableLinearStructure<Class<?>> getAllComps() {
+	public ReadableLinearStructure<String> getAllComps() {
 		return allComps;
 	}
 
-	public ReadableLinearStructure<Class<?>> getNoneComps() {
+	public ReadableLinearStructure<String> getNoneComps() {
 		return noneComps;
 	}
 
