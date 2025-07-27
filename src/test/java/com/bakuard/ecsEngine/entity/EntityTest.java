@@ -6,72 +6,72 @@ import org.junit.jupiter.api.Test;
 
 class EntityTest {
 
-    @DisplayName("""
-            Entity(entityAsLong):
-             entityAsLong = 0
-             => index = 0, generation = 0
-            """)
-    @Test
-    void constructorWithLong1() {
-        long entityAsLong = 0;
+	@DisplayName("""
+			fromLong(entityAsLong):
+			 entityAsLong = 0
+			 => index = 0, generation = 0
+			""")
+	@Test
+	void fromLong1() {
+		long entityAsLong = 0;
 
-        Entity actual = new Entity(entityAsLong);
+		Entity actual = Entity.fromLong(entityAsLong);
 
-        Assertions.assertThat(actual).isEqualTo(new Entity(0, 0));
-    }
+		Assertions.assertThat(actual).isEqualTo(new Entity(0, 0));
+	}
 
-    @DisplayName("""
-            Entity(entityAsLong):
-             entityAsLong = 0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001
-             => index = 1, generation = 0
-            """)
-    @Test
-    void constructorWithLong2() {
-        long entityAsLong = 0b0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001L;
+	@DisplayName("""
+			fromLong(entityAsLong):
+			 entityAsLong = 0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001
+			 => index = 1, generation = 0
+			""")
+	@Test
+	void fromLong2() {
+		long entityAsLong = 0b0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001L;
 
-        Entity actual = new Entity(entityAsLong);
+		Entity actual = Entity.fromLong(entityAsLong);
 
-        Assertions.assertThat(actual).isEqualTo(new Entity(1, 0));
-    }
+		Assertions.assertThat(actual).isEqualTo(new Entity(1, 0));
+	}
 
-    @DisplayName("""
-            Entity(entityAsLong):
-             entityAsLong = 0000_0000_0000_0000_0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0000
-             => index = 0, generation = 1
-            """)
-    @Test
-    void constructorWithLong3() {
-        long entityAsLong = 0b0000_0000_0000_0000_0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0000L;
+	@DisplayName("""
+			fromLong(entityAsLong):
+			 entityAsLong = 0000_0000_0000_0000_0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0000
+			 => index = 0, generation = 1
+			""")
+	@Test
+	void fromLong3() {
+		long entityAsLong = 0b0000_0000_0000_0000_0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0000L;
 
-        Entity actual = new Entity(entityAsLong);
+		Entity actual = Entity.fromLong(entityAsLong);
 
-        Assertions.assertThat(actual).isEqualTo(new Entity(0, 1));
-    }
+		Assertions.assertThat(actual).isEqualTo(new Entity(0, 1));
+	}
 
-    @DisplayName("""
-            Entity(entityAsLong):
-             entityAsLong = 0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001
-             => index = 1, generation = 1
-            """)
-    @Test
-    void constructorWithLong4() {
-        long entityAsLong = 0b0000_0000_0000_0000_0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0001L;
+	@DisplayName("""
+			fromLong(entityAsLong):
+			 entityAsLong = 0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001
+			 => index = 1, generation = 1
+			""")
+	@Test
+	void fromLong4() {
+		long entityAsLong = 0b0000_0000_0000_0000_0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0001L;
 
-        Entity actual = new Entity(entityAsLong);
+		Entity actual = Entity.fromLong(entityAsLong);
 
-        Assertions.assertThat(actual).isEqualTo(new Entity(1, 1));
-    }
+		Assertions.assertThat(actual).isEqualTo(new Entity(1, 1));
+	}
 
-    @DisplayName("""
-            asLong(), Entity(entityAsLong):
-             => new Entity(originEntity.asLong()) must be equal originEntity
-            """)
-    @Test
-    void asLong1() {
-        Entity origin = new Entity(112, 56);
+	@DisplayName("""
+			asLong(), Entity(entityAsLong):
+			 => new Entity(originEntity.asLong()) must be equal originEntity
+			""")
+	@Test
+	void toLong1() {
+		Entity origin = new Entity(112, 56);
 
-        Entity actual = new Entity(origin.asLong());
+		Entity actual = Entity.fromLong(Entity.toLong(origin));
 
-        Assertions.assertThat(actual).isEqualTo(origin);
-    }
+		Assertions.assertThat(actual).isEqualTo(origin);
+	}
 }

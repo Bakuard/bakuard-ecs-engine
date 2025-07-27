@@ -1,6 +1,7 @@
 package com.bakuard.ecsEngine.component;
 
 import com.bakuard.collections.Bits;
+import com.bakuard.collections.ReadableBits;
 import com.bakuard.ecsEngine.entity.Entity;
 
 import java.util.*;
@@ -115,7 +116,7 @@ public final class SparseSet implements CompPool {
     }
 
     @Override
-    public Bits getEntityIndexesMask() {
+    public ReadableBits getEntityIndexesMask() {
         return entityIndexes;
     }
 
