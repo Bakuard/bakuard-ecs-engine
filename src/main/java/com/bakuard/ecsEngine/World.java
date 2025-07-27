@@ -8,16 +8,30 @@ import com.bakuard.ecsEngine.component.TagsManager;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
 
+import java.util.Iterator;
+import java.util.Set;
+
 public final class World {
 
-	private final EntityManager entityManager;
-	private final CompsManager compsManager;
-	private final TagsManager tagsManager;
+	private EntityManager entityManager;
+	private CompsManager compsManager;
+	private TagsManager tagsManager;
 
 	public World() {
 		this.entityManager = new EntityManager();
 		this.compsManager = new CompsManager(entityManager);
 		this.tagsManager = new TagsManager(entityManager);
+	}
+
+	public void reloadAll(Iterator<Entity> entityIterator) {
+		this.entityManager = new EntityManager();
+		this.compsManager = new CompsManager(entityManager);
+		this.tagsManager = new TagsManager(entityManager);
+
+		while(entityIterator.hasNext()) {
+			Entity entity = entityIterator.next();
+			this.entityManager.addOrReplaceUnsafe(entity);
+		}
 	}
 
 
@@ -31,10 +45,6 @@ public final class World {
 		return entity;
 	}
 
-	public Entity getEntityByIndex(int index) {
-		return entityManager.getEntityByIndex(index);
-	}
-
 	public void remove(Entity entity) {
 		compsManager.detachAllComps(entity);
 		tagsManager.detachAllTags(entity);
@@ -46,9 +56,17 @@ public final class World {
 		return entityManager.isAlive(entity);
 	}
 
+	public Entity getEntityByIndex(int index) {
+		return entityManager.getEntityByIndex(index);
+	}
+
 
 	public void attachComp(Entity entity, Object comp) {
 		compsManager.attachComp(entity, comp);
+	}
+
+	public void attachComp(Entity entity, String poolName, Object comp) {
+		compsManager.attachComp(entity, poolName, comp);
 	}
 
 	public void attachComps(Entity entity, Object... comps) {
@@ -59,8 +77,16 @@ public final class World {
 		compsManager.detachComp(entity, compType);
 	}
 
+	public void detachComp(Entity entity, String poolName) {
+		compsManager.detachComp(entity, poolName);
+	}
+
 	public void detachComps(Entity entity, Class<?>... compTypes) {
 		compsManager.detachComps(entity, compTypes);
+	}
+
+	public void detachComps(Entity entity, String... poolNames) {
+		compsManager.detachComps(entity, poolNames);
 	}
 
 	public void detachAllComps(Entity entity) {
@@ -76,16 +102,32 @@ public final class World {
 		return compsManager.getComp(entity, compType);
 	}
 
+	public <T> T getComp(Entity entity, String poolName) {
+		return compsManager.getComp(entity, poolName);
+	}
+
 	public <T> boolean hasComp(Entity entity, Class<T> compType) {
 		return compsManager.hasComp(entity, compType);
+	}
+
+	public boolean hasComp(Entity entity, String poolName) {
+		return compsManager.hasComp(entity, poolName);
 	}
 
 	public boolean hasAllComps(Entity entity, Class<?>... compTypes) {
 		return compsManager.hasAllComps(entity, compTypes);
 	}
 
+	public boolean hasAllComps(Entity entity, String... poolNames) {
+		return compsManager.hasAllComps(entity, poolNames);
+	}
+
 	public boolean hasNoneOfComps(Entity entity, Class<?>... compTypes) {
 		return compsManager.hasNoneOfComps(entity, compTypes);
+	}
+
+	public boolean hasNoneOfComps(Entity entity, String... poolNames) {
+		return compsManager.hasNoneOfComps(entity, poolNames);
 	}
 
 	public boolean haveEqualComps(Entity firstEntity, Entity secondEntity) {
@@ -135,6 +177,11 @@ public final class World {
 	}
 
 
+	public Set<String> getAllTags() {
+		return tagsManager.getAllTags();
+	}
+
+
 	public void attachUniqueTag(Entity entity, String uniqueTag) {
 		tagsManager.attachUniqueTag(entity, uniqueTag);
 	}
@@ -164,6 +211,7 @@ public final class World {
 		return haveEqualTags(firstEntity, secondEntity) && haveEqualComps(firstEntity, secondEntity);
 	}
 
+
 	public Bits selectEntityIndexes(EntityFilter entityFilter) {
 		Bits entityIndexes = new Bits(entityManager.getAliveEntitiesMask());
 
@@ -176,12 +224,16 @@ public final class World {
 	}
 
 
-	public <T> World registerCompPool(CompPool pool, Class<T> compType) {
-		compsManager.registerCompPool(pool, compType);
+	public World registerCompPool(CompPool pool, String poolName) {
+		compsManager.registerCompPool(pool, poolName);
 		return this;
 	}
 
-	public <T, S extends CompPool> S getCompPool(Class<T> compType) {
-		return compsManager.getCompPool(compType);
+	public <S extends CompPool> S getCompPool(String poolName) {
+		return compsManager.getCompPool(poolName);
+	}
+
+	public Set<String> getAllCompPoolNames() {
+		return compsManager.getAllCompPoolNames();
 	}
 }
