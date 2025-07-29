@@ -5,11 +5,6 @@ import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import java.util.stream.Stream;
 
 class EntityManagerTest {
 
@@ -44,7 +39,7 @@ class EntityManagerTest {
 		for(int i = 0; i < 10; ++i) {
 			for(Entity entity : createEntities(i, 0,906,512,112,704,705,55,54,53,12,400))
 				manager.remove(entity);
-			for(Entity entity : createEntities(i + 1, 0,12,53,54,55,112,400,512,704,705,906))
+			for(Entity entity : createEntities(i + 1, 0,906,512,112,704,705,55,54,53,12,400))
 				assertions.assertThat(manager.create()).isEqualTo(entity);
 		}
 		assertions.assertAll();
@@ -93,6 +88,43 @@ class EntityManagerTest {
 		assertions.assertThat(entity1).isEqualTo(new Entity(512, 1));
 		assertions.assertThat(entity2).isEqualTo(new Entity(1000, 0));
 		assertions.assertThat(entity3).isEqualTo(new Entity(1001, 0));
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			getEntityByIndex(index), isAlive(entity):
+			 get alive entity
+			 => isAlive(returnedEntity) == true
+			""")
+	@Test
+	void getEntityByIndex1() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+
+		Entity actual = manager.getEntityByIndex(512);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(actual).isEqualTo(new Entity(512, 0));
+		assertions.assertThat(manager.isAlive(actual)).isTrue();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			getEntityByIndex(index), isAlive(entity):
+			 get dead entity
+			 => return entity with generation + 1, isAlive(returnedEntity) == false
+			""")
+	@Test
+	void getEntityByIndex2() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		manager.remove(new Entity(512, 0));
+
+		Entity actual = manager.getEntityByIndex(512);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(actual).isEqualTo(new Entity(512, 1));
+		assertions.assertThat(manager.isAlive(actual)).isFalse();
 		assertions.assertAll();
 	}
 
@@ -180,54 +212,6 @@ class EntityManagerTest {
 		boolean actual = manager.isAlive(null);
 
 		Assertions.assertThat(actual).isFalse();
-	}
-
-	@DisplayName("""
-			addOrReplaceUnsafe(entity):
-			 entity is null
-			 => do nothing
-			""")
-	@Test
-	void addOrReplaceUnsafe1() {
-		EntityManager manager = new EntityManager();
-		for(int i = 0; i < 1000; ++i) manager.create();
-
-		manager.addOrReplaceUnsafe(null);
-
-		for(int i = 0; i < 1000; ++i)
-			Assertions.assertThat(manager.getEntityByIndex(i)).isEqualTo(new Entity(i, 0));
-	}
-
-	@DisplayName("""
-			addOrReplaceUnsafe(entity):
-			 entity with such index has never been created
-			 => add entity to manager
-			""")
-	@Test
-	void addOrReplaceUnsafe2() {
-		EntityManager manager = new EntityManager();
-		for(int i = 0; i < 1000; ++i) manager.create();
-		Entity entity = new Entity(10000, 100);
-
-		manager.addOrReplaceUnsafe(entity);
-
-		Assertions.assertThat(manager.getEntityByIndex(10000)).isEqualTo(entity);
-	}
-
-	@DisplayName("""
-			addOrReplaceUnsafe(entity):
-			 entity with such index has already been created
-			 => replace entity to manager
-			""")
-	@Test
-	void addOrReplaceUnsafe3() {
-		EntityManager manager = new EntityManager();
-		for(int i = 0; i < 1000; ++i) manager.create();
-		Entity entity = new Entity(512, 100);
-
-		manager.addOrReplaceUnsafe(entity);
-
-		Assertions.assertThat(manager.getEntityByIndex(512)).isEqualTo(entity);
 	}
 
 
