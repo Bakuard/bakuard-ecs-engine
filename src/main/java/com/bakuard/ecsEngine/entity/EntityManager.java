@@ -4,6 +4,7 @@ import com.bakuard.collections.Bits;
 import com.bakuard.collections.ReadableBits;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Objects;
 
 /**
@@ -16,31 +17,58 @@ public final class EntityManager {
 
 	private long[] entities;
 	private int size;
+	private int head = -1;
+	private int tail = -1;
 	private final Bits aliveEntitiesMask;
 
 	public EntityManager() {
 		entities = new long[10];
-		aliveEntitiesMask = new Bits(calculateBitsCapacity(10) + 1);
+		aliveEntitiesMask = new Bits(MIN_BITS_SIZE);
+	}
+
+	public EntityManager(InitialEntityIterator entityIterator) {
+		this();
+
+		while(entityIterator.next()) {
+			Entity entity = entityIterator.getEntity();
+			final int index = entity.index();
+			growToIndex(index);
+			if(entityIterator.isEntityAlive()) {
+				entities[index] = Entity.toLong(entity);
+				aliveEntitiesMask.set(index);
+			} else {
+				pushEntityToImplicitList(entity);
+			}
+		}
+
+		for(int i = 0; i < size; i++)
+			if(entities[i] == 0L)
+				entities[i] = pack(i, 0);
 	}
 
 	/**
 	 * Создает и возвращает новую сущность.
-	 * <br/><br/>
+	 * <p>
 	 * Менеджер сущностей переиспользует индексы недавно удаленных сущностей в порядке возрастания
 	 * их (индексов) значений.
+	 * </p>
 	 */
 	public Entity create() {
-		int nextReusableEntityIndex = aliveEntitiesMask.nextClearBit(0);
-
-		if(nextReusableEntityIndex < size) {
-			aliveEntitiesMask.set(nextReusableEntityIndex);
-			return Entity.fromLong(entities[nextReusableEntityIndex]);
+		if(head != -1) {
+			final int index = head;
+			head = extractIndex(entities[index]);
+			if(head == -1)
+				tail = -1;
+			entities[index] = pack(index, extractGeneration(entities[index]));
+			aliveEntitiesMask.set(index);
+			return Entity.fromLong(entities[index]);
+		} else {
+			final int index = size;
+			growToIndex(index);
+			entities[index] = pack(index, 0);
+			aliveEntitiesMask.set(index);
+			return new Entity(index, 0);
 		}
-
-		growToIndex(nextReusableEntityIndex);
-		aliveEntitiesMask.set(nextReusableEntityIndex);
-		entities[nextReusableEntityIndex] = pack(nextReusableEntityIndex, 0);
-		return new Entity(nextReusableEntityIndex, 0);
 	}
 
 	/**
@@ -48,59 +76,34 @@ public final class EntityManager {
 	 */
 	public void remove(Entity entity) {
 		if(isAlive(entity)) {
-			int index = entity.index();
-			entities[index] = pack(index, entity.generation() + 1);
-			aliveEntitiesMask.clear(index);
+			pushEntityToImplicitList(entity);
+			aliveEntitiesMask.clear(entity.index());
 		}
 	}
 
 	/**
-	 * Добавляет указанную сущность. Если сущность с таким же индексом уже существует - перезаписывает её. После
-	 * выполнения метода сущность будет живой ({@link #isAlive(Entity)}). Если entity равен null - метод ничего не делает.
-	 *
-	 * <p>
-	 * <b>НАЗНАЧЕНИЕ:</b> предназначен для восстановления состояния {@link EntityManager} при загрузке игры.
-	 * </p>
-	 *
-	 * <p>
-	 * <b>ВНИМАНИЕ!</b> Данный метод не делает никаких проверок для значений {@link Entity#index()} и {@link Entity#generation()}.
-	 * Использование этого метода может привести к излишнему расходу памяти (при очень больших значениях {@link Entity#index()})
-	 * и неожиданным ошибкам.
-	 * </p>
-	 * @param entity добавляемая сущность.
-	 */
-	public void addOrReplaceUnsafe(Entity entity) {
-		if(entity == null) return;
-
-		final int entityIndex = entity.index();
-		if(entityIndex >= size) growToIndex(entityIndex);
-
-		aliveEntitiesMask.set(entityIndex);
-		entities[entityIndex] = pack(entityIndex, entity.generation());
-	}
-
-	/**
-	 * Сущность считается живой после её создания через {@link #create()} или {@link #addOrReplaceUnsafe(Entity)}
-	 * и до её удаления через {@link #remove(Entity)}.
-	 * <p>
-	 * Особый случай: если entity равен null - метод вернет false.
-	 * </p>
+	 * Сущность считается живой после её создания через {@link #create()} и до её удаления через {@link #remove(Entity)}.
+	 * <p>Особый случай: если entity равен null - метод вернет false.</p>
 	 */
 	public boolean isAlive(Entity entity) {
 		return entity != null
-				&& entity.index() < size
-				&& extractGeneration(entities[entity.index()]) == entity.generation();
+					   && entity.index() < size
+					   && extractGeneration(entities[entity.index()]) == entity.generation()
+					   && aliveEntitiesMask.get(entity.index());
 	}
 
 	/**
-	 * Возвращает сущность по её индексу. Возвращаемая сущность может быть живой ({@link #isAlive(Entity)}),
-	 * либо мертвой, в зависимости от того, жива ли сущность под указанным индексом на момент вызова
-	 * данного метода. <br/><br/>
+	 * Возвращает сущность по её индексу. Возвращаемая сущность может быть как живой ({@link #isAlive(Entity)}), так
+	 * и мертвой.
+	 * <p>
 	 * Особый случай: если сущность с указанным индексом никогда ранее не создавалась через данный
 	 * менеджер сущностей - метод вернет мертвую сущность с {@link Entity#generation()} равным 0.
+	 * </p>
 	 */
 	public Entity getEntityByIndex(int index) {
-		return index < size ? Entity.fromLong(entities[index]) : new Entity(index, 0);
+		int generation = 0;
+		if(index < size) generation = extractGeneration(entities[index]);
+		return new Entity(index, generation);
 	}
 
 	/**
@@ -166,24 +169,36 @@ public final class EntityManager {
 
 
 	private long pack(int index, int generation) {
-		return (long)generation << 32 | (long)index;
+		return (long)generation << 32 | ((long)index & 0xFFFFFFFFL);
 	}
 
 	private int extractGeneration(long entity) {
 		return (int)(entity >>> 32);
 	}
 
+	private int extractIndex(long entity) {
+		return (int)entity;
+	}
+
+	private void pushEntityToImplicitList(Entity entity) {
+		final int index = entity.index();
+		if(tail != -1)
+			entities[tail] = pack(index, extractGeneration(entities[tail]));
+		else
+			head = index;
+		tail = index;
+		entities[index] = pack(-1, entity.generation() + 1);
+	}
+
 
 	private void growToIndex(int index) {
 		size = index + 1;
-		if(size > entities.length) {
-			entities = Arrays.copyOf(entities, calculateCapacity(size));
-		}
-
+		if(size > entities.length)
+			entities = Arrays.copyOf(entities, calculateArrayCapacity(size));
 		aliveEntitiesMask.growToIndex(calculateBitsCapacity(index));
 	}
 
-	private int calculateCapacity(int size) {
+	private int calculateArrayCapacity(int size) {
 		return size + (size >>> 1);
 	}
 
