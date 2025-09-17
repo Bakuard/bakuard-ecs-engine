@@ -8,8 +8,13 @@ import java.util.Iterator;
 import java.util.Objects;
 
 /**
- * Отвечает за создание и удаление сущностей ({@link Entity}). Также позволяет проверить, была ли
- * сущность удалена.
+ * <p>
+ *     Отвечает за создание и удаление сущностей ({@link Entity}). Также позволяет проверить, была ли
+ *     сущность удалена.
+ * </p>
+ * <p>
+ *     Объекты данного класса не являются потокобезопасными.
+ * </p>
  */
 public final class EntityManager {
 
@@ -24,26 +29,6 @@ public final class EntityManager {
 	public EntityManager() {
 		entities = new long[10];
 		aliveEntitiesMask = new Bits(MIN_BITS_SIZE);
-	}
-
-	public EntityManager(InitialEntityIterator entityIterator) {
-		this();
-
-		while(entityIterator.next()) {
-			Entity entity = entityIterator.getEntity();
-			final int index = entity.index();
-			growToIndex(index);
-			if(entityIterator.isEntityAlive()) {
-				entities[index] = Entity.toLong(entity);
-				aliveEntitiesMask.set(index);
-			} else {
-				pushEntityToImplicitList(entity);
-			}
-		}
-
-		for(int i = 0; i < size; i++)
-			if(entities[i] == 0L)
-				entities[i] = pack(i, 0);
 	}
 
 	/**
@@ -104,6 +89,21 @@ public final class EntityManager {
 		int generation = 0;
 		if(index < size) generation = extractGeneration(entities[index]);
 		return new Entity(index, generation);
+	}
+
+	/**
+	 * <p>Возвращает верхнюю границу диапазона индексов всех сущностей, когда-либо созданных через данный экземпляр EntityManager.</p>
+	 * <p>
+	 *     Уточнения по поведению метода:
+	 *     <ol>
+	 *         <li>Если ни одной сущности не было создано - возвращает 0.</li>
+	 *         <li>При удалении сущностей - возвращаемое значение не уменьшается.</li>
+	 *         <li>Возвращаемое значение не отображает кол-во живых сущностей.</li>
+	 *     </ol>
+	 * </p>
+	 */
+	public int entityIndexUpperBound() {
+		return size;
 	}
 
 	/**
