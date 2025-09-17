@@ -7,25 +7,17 @@ import com.bakuard.ecsEngine.component.EntityFilter;
 import com.bakuard.ecsEngine.component.TagsManager;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
-import com.bakuard.ecsEngine.entity.InitialEntityIterator;
 
-import java.util.Iterator;
 import java.util.Set;
 
 public final class World {
 
-	private EntityManager entityManager;
-	private CompsManager compsManager;
-	private TagsManager tagsManager;
+	private final EntityManager entityManager;
+	private final CompsManager compsManager;
+	private final TagsManager tagsManager;
 
 	public World() {
 		this.entityManager = new EntityManager();
-		this.compsManager = new CompsManager(entityManager);
-		this.tagsManager = new TagsManager(entityManager);
-	}
-
-	public void clearAllAndLoadEntities(InitialEntityIterator entityIterator) {
-		this.entityManager = new EntityManager(entityIterator);
 		this.compsManager = new CompsManager(entityManager);
 		this.tagsManager = new TagsManager(entityManager);
 	}
@@ -54,6 +46,10 @@ public final class World {
 
 	public Entity getEntityByIndex(int index) {
 		return entityManager.getEntityByIndex(index);
+	}
+
+	public int entityIndexUpperBound() {
+		return entityManager.entityIndexUpperBound();
 	}
 
 

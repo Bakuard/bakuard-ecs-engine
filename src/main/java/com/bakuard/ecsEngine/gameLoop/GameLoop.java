@@ -66,10 +66,7 @@ public final class GameLoop {
 
 	@Override
 	public String toString() {
-		return "GameLoop{"
-					   + "numberUpdatePerSecond: " + numberUpdatePerSecond
-					   + ", maxFrameSkip: " + maxFrameSkip
-					   + "}";
+		return "GameLoop{ numberUpdatePerSecond: " + numberUpdatePerSecond + ", maxFrameSkip: " + maxFrameSkip + "}";
 	}
 
 
