@@ -18,16 +18,12 @@ public final class CompsManager {
 	}
 
 	public void attachComp(Entity entity, Object comp) {
-		attachComp(entity, comp.getClass().getName(), comp);
-	}
-
-	public void attachComp(Entity entity, String poolName, Object comp) {
-		if(entityManager.isAlive(entity)) attachCompIgnoringEntityState(entity, poolName, comp);
+		attachComp(entity, comp, comp.getClass().getName());
 	}
 
 	public void attachComps(Entity entity, Object... comps) {
 		if(entityManager.isAlive(entity)) {
-			for(Object comp : comps) attachCompIgnoringEntityState(entity, comp.getClass().getName(), comp);
+			for(Object comp : comps) attachCompIgnoringEntityState(entity, comp, comp.getClass().getName());
 		}
 	}
 
@@ -35,23 +31,13 @@ public final class CompsManager {
 		detachComp(entity, compType.getName());
 	}
 
-	public void detachComp(Entity entity, String poolName) {
-		if(entityManager.isAlive(entity)) detachCompIgnoringEntityState(entity, poolName);
-	}
-
 	public void detachComps(Entity entity, Class<?>... compTypes) {
 		detachComps(entity, map(compTypes));
 	}
 
-	public void detachComps(Entity entity, String... poolNames) {
-		if(entityManager.isAlive(entity)) {
-			for(String poolName : poolNames) detachCompIgnoringEntityState(entity, poolName);
-		}
-	}
-
 	public void detachAllComps(Entity entity) {
 		if(entityManager.isAlive(entity)) {
-			compPools.forEach((compType, compPool) -> compPool.detachComp(entity));
+			compPools.forEach((compName, compPool) -> compPool.detachComp(entity));
 		}
 	}
 
@@ -61,47 +47,35 @@ public final class CompsManager {
 	}
 
 
-	public <T> T getComp(Entity entity, Class<T> compType) {
-		return getComp(entity, compType.getName());
+	public void attachComp(Entity entity, Object comp, String poolName) {
+		if(entityManager.isAlive(entity)) attachCompIgnoringEntityState(entity, comp, poolName);
 	}
 
-	public <T> T getComp(Entity entity, String poolName) {
-		T result = null;
+	public void detachComp(Entity entity, String poolName) {
+		if(entityManager.isAlive(entity)) detachCompIgnoringEntityState(entity, poolName);
+	}
+
+	public void detachComps(Entity entity, String... poolNames) {
 		if(entityManager.isAlive(entity)) {
-			CompPool pool = compPools.get(poolName);
-			if(pool != null) result = pool.getComp(entity);
+			for(String poolName : poolNames) detachCompIgnoringEntityState(entity, poolName);
 		}
-		return result;
+	}
+
+
+	public <T> T getComp(Entity entity, Class<T> compType) {
+		return getComp(entity, compType.getName());
 	}
 
 	public <T> boolean hasComp(Entity entity, Class<T> compType) {
 		return hasComp(entity, compType.getName());
 	}
 
-	public boolean hasComp(Entity entity, String poolName) {
-		return entityManager.isAlive(entity) && hasComponentIgnoringEntityState(entity, poolName);
-	}
-
 	public boolean hasAllComps(Entity entity, Class<?>... compTypes) {
 		return hasAllComps(entity, map(compTypes));
 	}
 
-	public boolean hasAllComps(Entity entity, String... poolNames) {
-		boolean result = entityManager.isAlive(entity);
-		for(int i = 0; i < poolNames.length && result; i++)
-			result = hasComponentIgnoringEntityState(entity, poolNames[i]);
-		return result;
-	}
-
 	public boolean hasNoneOfComps(Entity entity, Class<?>... compTypes) {
 		return hasNoneOfComps(entity, map(compTypes));
-	}
-
-	public boolean hasNoneOfComps(Entity entity, String... poolNames) {
-		boolean result = entityManager.isAlive(entity);
-		for(int i = 0; i < poolNames.length && result; i++)
-			result = !hasComponentIgnoringEntityState(entity, poolNames[i]);
-		return result;
 	}
 
 	public boolean haveEqualComps(Entity firstEntity, Entity secondEntity) {
@@ -118,6 +92,34 @@ public final class CompsManager {
 		}
 
 		return result || (!isFirstAlive && !isSecondAlive);
+	}
+
+
+	public <T> T getComp(Entity entity, String poolName) {
+		T result = null;
+		if(entityManager.isAlive(entity)) {
+			CompPool pool = compPools.get(poolName);
+			if(pool != null) result = pool.getComp(entity);
+		}
+		return result;
+	}
+
+	public boolean hasComp(Entity entity, String poolName) {
+		return entityManager.isAlive(entity) && hasComponentIgnoringEntityState(entity, poolName);
+	}
+
+	public boolean hasAllComps(Entity entity, String... poolNames) {
+		boolean result = entityManager.isAlive(entity);
+		for(int i = 0; i < poolNames.length && result; i++)
+			result = hasComponentIgnoringEntityState(entity, poolNames[i]);
+		return result;
+	}
+
+	public boolean hasNoneOfComps(Entity entity, String... poolNames) {
+		boolean result = entityManager.isAlive(entity);
+		for(int i = 0; i < poolNames.length && result; i++)
+			result = !hasComponentIgnoringEntityState(entity, poolNames[i]);
+		return result;
 	}
 
 
@@ -141,6 +143,15 @@ public final class CompsManager {
 	}
 
 
+	public void registerCompPool(CompPool pool) {
+		registerCompPool(pool, pool.getClass().getName());
+	}
+
+	public <T, S extends CompPool> S getCompPool(Class<T> poolType) {
+		return getCompPool(poolType.getName());
+	}
+
+
 	public void registerCompPool(CompPool pool, String poolName) {
 		compPools.put(poolName, pool);
 	}
@@ -154,7 +165,7 @@ public final class CompsManager {
 	}
 
 
-	private void attachCompIgnoringEntityState(Entity entity, String poolName, Object comp) {
+	private void attachCompIgnoringEntityState(Entity entity, Object comp, String poolName) {
 		compPools.computeIfAbsent(poolName, compType -> new SparseSet()).attachComp(entity, comp);
 	}
 
