@@ -4,7 +4,6 @@ import com.bakuard.collections.Bits;
 import com.bakuard.collections.ReadableBits;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Objects;
 
 /**
@@ -67,6 +66,61 @@ public final class EntityManager {
 	}
 
 	/**
+	 * <p>Если нет живой ({@link #isAlive(Entity)}) сущности с таким же индексом - данная сущность становится живой.
+	 * Если уже есть живая сущность с таким же индексом - выбрасывает исключение.</p>
+	 *
+	 * <p><b>Назначение данного метода</b> - облегчить тестирование в тех случаях, когда требуется точно восстановить определенное состояние мира.</p>
+	 *
+	 * <p>Данный метод работает медленно (O(n), где n - кол-во мертвых сущностей, зарезервированных для переиспользования)
+	 * и может вызывать перерасход памяти при больших значениях {@link Entity#index()}</p>
+	 *
+	 * @throws IllegalStateException если уже есть живая сущность с таким же индексом ({@link #isAlive(Entity)}).
+	 * @throws NullPointerException если entity равен null.
+	 */
+	public void revive(Entity entity) {
+		if(hasAliveEntityWith(entity.index()))
+			throw new IllegalStateException("There is already a living entity with index " + entity.index());
+
+		int previousEntityIndex = -1;
+		int entityIndex = head;
+		while(entityIndex != -1 && entityIndex != entity.index()) {
+			previousEntityIndex = entityIndex;
+			entityIndex = extractIndex(entities[entityIndex]);
+		}
+
+		if(entityIndex == -1) {
+			previousEntityIndex = size;
+			entityIndex = entity.index();
+			growToIndex(entityIndex);
+			if(entityIndex > previousEntityIndex) {
+				if(head == -1)
+					head = previousEntityIndex;
+				else
+					entities[tail] = pack(previousEntityIndex, extractGeneration(entities[tail]));
+				tail = entityIndex - 1;
+				entities[tail] = pack(-1, 0);
+				while(previousEntityIndex < tail) {
+					entities[previousEntityIndex] = pack(previousEntityIndex + 1, 0);
+					++previousEntityIndex;
+				}
+			}
+		} else if(entityIndex == head && entityIndex == tail) {
+			head = -1;
+			tail = -1;
+		} else if(entityIndex == head) {
+			head = extractIndex(entities[entityIndex]);
+		} else if(entityIndex == tail) {
+			tail = previousEntityIndex;
+			entities[previousEntityIndex] = pack(-1, extractGeneration(entities[previousEntityIndex]));
+		} else {
+			entities[previousEntityIndex] = pack(extractIndex(entities[entityIndex]), extractGeneration(entities[previousEntityIndex]));
+		}
+
+		entities[entityIndex] = Entity.toLong(entity);
+		aliveEntitiesMask.set(entityIndex);
+	}
+
+	/**
 	 * Сущность считается живой после её создания через {@link #create()} и до её удаления через {@link #remove(Entity)}.
 	 * <p>Особый случай: если entity равен null - метод вернет false.</p>
 	 */
@@ -75,6 +129,14 @@ public final class EntityManager {
 					   && entity.index() < size
 					   && extractGeneration(entities[entity.index()]) == entity.generation()
 					   && aliveEntitiesMask.get(entity.index());
+	}
+
+	/**
+	 * <p>Возвращает true - если на момент вызова этого метода есть живая сущность с указанным индексом.
+	 * Иначе возвращает false.</p>
+	 */
+	public boolean hasAliveEntityWith(int index) {
+		return aliveEntitiesMask.inBound(index) && aliveEntitiesMask.get(index);
 	}
 
 	/**
@@ -92,7 +154,7 @@ public final class EntityManager {
 	}
 
 	/**
-	 * <p>Возвращает верхнюю границу диапазона индексов всех сущностей, когда-либо созданных через данный экземпляр EntityManager.</p>
+	 * <p>Возвращает кол-во всех зарезервированных индексов сущностей внутри данного менеджера сущностей.</p>
 	 * <p>
 	 *     Уточнения по поведению метода:
 	 *     <ol>
@@ -102,7 +164,7 @@ public final class EntityManager {
 	 *     </ol>
 	 * </p>
 	 */
-	public int entityIndexUpperBound() {
+	public int entityIndexHighWaterMark() {
 		return size;
 	}
 

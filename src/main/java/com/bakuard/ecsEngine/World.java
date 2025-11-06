@@ -40,16 +40,24 @@ public final class World {
 		entityManager.remove(entity);
 	}
 
+	public void revive(Entity entity) {
+		entityManager.revive(entity);
+	}
+
 	public boolean isAlive(Entity entity) {
 		return entityManager.isAlive(entity);
+	}
+
+	public boolean hasAliveEntityWith(int index) {
+		return entityManager.hasAliveEntityWith(index);
 	}
 
 	public Entity getEntityByIndex(int index) {
 		return entityManager.getEntityByIndex(index);
 	}
 
-	public int entityIndexUpperBound() {
-		return entityManager.entityIndexUpperBound();
+	public int entityIndexHighWaterMark() {
+		return entityManager.entityIndexHighWaterMark();
 	}
 
 
@@ -57,28 +65,16 @@ public final class World {
 		compsManager.attachComp(entity, comp);
 	}
 
-	public void attachComp(Entity entity, String poolName, Object comp) {
-		compsManager.attachComp(entity, poolName, comp);
-	}
-
 	public void attachComps(Entity entity, Object... comps) {
-	   compsManager.attachComps(entity, comps);
+		compsManager.attachComps(entity, comps);
 	}
 
 	public <T> void detachComp(Entity entity, Class<T> compType) {
 		compsManager.detachComp(entity, compType);
 	}
 
-	public void detachComp(Entity entity, String poolName) {
-		compsManager.detachComp(entity, poolName);
-	}
-
 	public void detachComps(Entity entity, Class<?>... compTypes) {
 		compsManager.detachComps(entity, compTypes);
-	}
-
-	public void detachComps(Entity entity, String... poolNames) {
-		compsManager.detachComps(entity, poolNames);
 	}
 
 	public void detachAllComps(Entity entity) {
@@ -90,40 +86,54 @@ public final class World {
 	}
 
 
-	public <T> T getComp(Entity entity, Class<T> compType) {
-		return compsManager.getComp(entity, compType);
+	public void attachComp(Entity entity, Object comp, String poolName) {
+		compsManager.attachComp(entity, comp, poolName);
 	}
 
-	public <T> T getComp(Entity entity, String poolName) {
-		return compsManager.getComp(entity, poolName);
+	public void detachComp(Entity entity, String poolName) {
+		compsManager.detachComp(entity, poolName);
+	}
+
+	public void detachComps(Entity entity, String... poolNames) {
+		compsManager.detachComps(entity, poolNames);
+	}
+
+
+	public <T> T getComp(Entity entity, Class<T> compType) {
+		return compsManager.getComp(entity, compType);
 	}
 
 	public <T> boolean hasComp(Entity entity, Class<T> compType) {
 		return compsManager.hasComp(entity, compType);
 	}
 
-	public boolean hasComp(Entity entity, String poolName) {
-		return compsManager.hasComp(entity, poolName);
-	}
-
 	public boolean hasAllComps(Entity entity, Class<?>... compTypes) {
 		return compsManager.hasAllComps(entity, compTypes);
-	}
-
-	public boolean hasAllComps(Entity entity, String... poolNames) {
-		return compsManager.hasAllComps(entity, poolNames);
 	}
 
 	public boolean hasNoneOfComps(Entity entity, Class<?>... compTypes) {
 		return compsManager.hasNoneOfComps(entity, compTypes);
 	}
 
-	public boolean hasNoneOfComps(Entity entity, String... poolNames) {
-		return compsManager.hasNoneOfComps(entity, poolNames);
-	}
-
 	public boolean haveEqualComps(Entity firstEntity, Entity secondEntity) {
 		return compsManager.haveEqualComps(firstEntity, secondEntity);
+	}
+
+
+	public <T> T getComp(Entity entity, String poolName) {
+		return compsManager.getComp(entity, poolName);
+	}
+
+	public boolean hasComp(Entity entity, String poolName) {
+		return compsManager.hasComp(entity, poolName);
+	}
+
+	public boolean hasAllComps(Entity entity, String... poolNames) {
+		return compsManager.hasAllComps(entity, poolNames);
+	}
+
+	public boolean hasNoneOfComps(Entity entity, String... poolNames) {
+		return compsManager.hasNoneOfComps(entity, poolNames);
 	}
 
 
@@ -145,6 +155,10 @@ public final class World {
 
 	public void detachAllTags(Entity entity) {
 		tagsManager.detachAllTags(entity);
+	}
+
+	public void detachTagFromAllEntities(String tag) {
+		tagsManager.detachTagFromAllEntities(tag);
 	}
 
 	public void replaceAllTags(Entity entity, String... tags) {
@@ -213,6 +227,16 @@ public final class World {
 		tagsManager.excludeEntityIndexesWith(entityIndexes, entityFilter.getNoneTags());
 
 		return entityIndexes;
+	}
+
+
+	public World registerCompPool(CompPool pool) {
+		compsManager.registerCompPool(pool);
+		return this;
+	}
+
+	public <T, S extends CompPool> S getCompPool(Class<T> poolType) {
+		return compsManager.getCompPool(poolType);
 	}
 
 

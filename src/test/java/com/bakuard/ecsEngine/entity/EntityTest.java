@@ -63,7 +63,7 @@ class EntityTest {
 	}
 
 	@DisplayName("""
-			asLong(), Entity(entityAsLong):
+			toLong(), Entity(entityAsLong):
 			 => new Entity(originEntity.asLong()) must be equal originEntity
 			""")
 	@Test

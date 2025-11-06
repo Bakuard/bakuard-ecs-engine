@@ -52,6 +52,10 @@ public final class TagsManager {
 		}
 	}
 
+	public void detachTagFromAllEntities(String tag) {
+		tagMasks.remove(tag);
+	}
+
 	public void replaceAllTags(Entity entity, String... tags) {
 		detachAllTags(entity);
 		attachTags(entity, tags);
