@@ -41,7 +41,7 @@ public final class World {
 	}
 
 	public void revive(Entity entity) {
-		entityManager.revive(entity);
+		entityManager.unsafeRevive(entity);
 	}
 
 	public boolean isAlive(Entity entity) {

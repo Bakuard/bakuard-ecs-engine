@@ -322,12 +322,12 @@ class EntityManagerTest {
 			 => throw IllegalSTateException
 			""")
 	@Test
-	void revive1() {
+	void unsafeRevive1() {
 		EntityManager manager = new EntityManager();
 		Entity entity = manager.create();
 
 		Assertions.assertThatExceptionOfType(IllegalStateException.class)
-				.isThrownBy(() -> manager.revive(entity));
+				.isThrownBy(() -> manager.unsafeRevive(entity));
 	}
 
 	@DisplayName("""
@@ -337,7 +337,7 @@ class EntityManagerTest {
 			 => throw IllegalSTateException
 			""")
 	@Test
-	void revive2() {
+	void unsafeRevive2() {
 		EntityManager manager = new EntityManager();
 		Entity entity = manager.create();
 		manager.remove(entity);
@@ -346,7 +346,7 @@ class EntityManagerTest {
 		manager.create();
 
 		Assertions.assertThatExceptionOfType(IllegalStateException.class)
-				.isThrownBy(() -> manager.revive(entity));
+				.isThrownBy(() -> manager.unsafeRevive(entity));
 	}
 
 	@DisplayName("""
@@ -358,12 +358,12 @@ class EntityManagerTest {
 			 => revive entity
 			""")
 	@Test
-	void revive3() {
+	void unsafeRevive3() {
 		EntityManager manager = new EntityManager();
 		for(int i = 0; i < 1000; ++i) manager.create();
 
 		Entity entity = new Entity(1000, 512);
-		manager.revive(entity);
+		manager.unsafeRevive(entity);
 
 		SoftAssertions assertions = new SoftAssertions();
 		assertions.assertThat(manager.isAlive(entity)).isTrue();
@@ -380,12 +380,12 @@ class EntityManagerTest {
 			 => revive entity, dead entities from manager.entityIndexHighWaterMark() to entity.index()
 			""")
 	@Test
-	void revive4() {
+	void unsafeRevive4() {
 		EntityManager manager = new EntityManager();
 		for(int i = 0; i < 1000; ++i) manager.create();
 
 		Entity entity = new Entity(2000, 512);
-		manager.revive(entity);
+		manager.unsafeRevive(entity);
 		List<Entity> actual = IntStream.range(1000, 2000).mapToObj(i -> manager.create()).toList();
 
 		List<Entity> expected = IntStream.range(1000, 2000).mapToObj(i -> new Entity(i, 0)).toList();
@@ -402,7 +402,7 @@ class EntityManagerTest {
 			 => revive entity, dead entities from manager.entityIndexHighWaterMark() to entity.index()
 			""")
 	@Test
-	void revive5() {
+	void unsafeRevive5() {
 		EntityManager manager = new EntityManager();
 		for(int i = 0; i < 1000; ++i) manager.create();
 		manager.remove(new Entity(0, 0));
@@ -412,7 +412,7 @@ class EntityManagerTest {
 		manager.remove(new Entity(999, 0));
 
 		Entity entity = new Entity(1000, 512);
-		manager.revive(entity);
+		manager.unsafeRevive(entity);
 		List<Entity> actual = IntStream.range(0, 6).mapToObj(i -> manager.create()).toList();
 
 		List<Entity> expected = new ArrayList<>();
@@ -435,7 +435,7 @@ class EntityManagerTest {
 			 => revive entity, dead entities from manager.entityIndexHighWaterMark() to entity.index()
 			""")
 	@Test
-	void revive6() {
+	void unsafeRevive6() {
 		EntityManager manager = new EntityManager();
 		for(int i = 0; i < 1000; ++i) manager.create();
 		manager.remove(new Entity(0, 0));
@@ -445,7 +445,7 @@ class EntityManagerTest {
 		manager.remove(new Entity(999, 0));
 
 		Entity entity = new Entity(2000, 512);
-		manager.revive(entity);
+		manager.unsafeRevive(entity);
 		List<Entity> actual = IntStream.range(0, 2005).mapToObj(i -> manager.create()).toList();
 
 		List<Entity> expected = new ArrayList<>();
@@ -468,7 +468,7 @@ class EntityManagerTest {
 			 => revive entity
 			""")
 	@Test
-	void revive7() {
+	void unsafeRevive7() {
 		EntityManager manager = new EntityManager();
 		for(int i = 0; i < 1000; ++i) manager.create();
 		manager.remove(new Entity(0, 0));
@@ -478,7 +478,7 @@ class EntityManagerTest {
 		manager.remove(new Entity(999, 0));
 
 		Entity entity = new Entity(0, 512);
-		manager.revive(entity);
+		manager.unsafeRevive(entity);
 		List<Entity> actual = IntStream.range(0, 1004).mapToObj(i -> manager.create()).toList();
 
 		List<Entity> expected = new ArrayList<>();
@@ -503,7 +503,7 @@ class EntityManagerTest {
 			 => revive entity
 			""")
 	@Test
-	void revive8() {
+	void unsafeRevive8() {
 		EntityManager manager = new EntityManager();
 		for(int i = 0; i < 1000; ++i) manager.create();
 		manager.remove(new Entity(0, 0));
@@ -513,7 +513,7 @@ class EntityManagerTest {
 		manager.remove(new Entity(999, 0));
 
 		Entity entity = new Entity(101, 512);
-		manager.revive(entity);
+		manager.unsafeRevive(entity);
 		List<Entity> actual = IntStream.range(0, 1004).mapToObj(i -> manager.create()).toList();
 
 		List<Entity> expected = new ArrayList<>();
@@ -538,7 +538,7 @@ class EntityManagerTest {
 			 => revive entity
 			""")
 	@Test
-	void revive9() {
+	void unsafeRevive9() {
 		EntityManager manager = new EntityManager();
 		for(int i = 0; i < 1000; ++i) manager.create();
 		manager.remove(new Entity(0, 0));
@@ -548,7 +548,7 @@ class EntityManagerTest {
 		manager.remove(new Entity(999, 0));
 
 		Entity entity = new Entity(999, 512);
-		manager.revive(entity);
+		manager.unsafeRevive(entity);
 		List<Entity> actual = IntStream.range(0, 1004).mapToObj(i -> manager.create()).toList();
 
 		List<Entity> expected = new ArrayList<>();
@@ -573,13 +573,13 @@ class EntityManagerTest {
 			 => revive entity
 			""")
 	@Test
-	void revive10() {
+	void unsafeRevive10() {
 		EntityManager manager = new EntityManager();
 		for(int i = 0; i < 1000; ++i) manager.create();
 		manager.remove(new Entity(101, 0));
 
 		Entity entity = new Entity(101, 512);
-		manager.revive(entity);
+		manager.unsafeRevive(entity);
 		List<Entity> actual = IntStream.range(0, 1000).mapToObj(i -> manager.create()).toList();
 
 		List<Entity> expected = IntStream.range(1000, 2000).mapToObj(i -> new Entity(i, 0)).toList();
