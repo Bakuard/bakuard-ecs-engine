@@ -19,14 +19,15 @@ public final class EntityManager {
 
 	private static final int MIN_BITS_SIZE = 256;
 
-	private long[] entities;
-	private int size;
-	private int head = -1;
-	private int tail = -1;
+	private int[] generations;
+	private int[] recycledIndexes;
+	private int generationsSize;
+	private int recycledIndexesSize;
 	private final Bits aliveEntitiesMask;
 
 	public EntityManager() {
-		entities = new long[10];
+		generations = new int[10];
+		recycledIndexes = new int[10];
 		aliveEntitiesMask = new Bits(MIN_BITS_SIZE);
 	}
 
@@ -36,20 +37,15 @@ public final class EntityManager {
 	 * будет создана через данный менеджер только один раз. Эта гарантия может быть нарушена в результате вызова {@link #unsafeRevive(Entity)}.</p>
 	 */
 	public Entity create() {
-		if(head != -1) {
-			final int index = head;
-			head = extractIndex(entities[index]);
-			if(head == -1)
-				tail = -1;
-			entities[index] = pack(index, extractGeneration(entities[index]));
-			aliveEntitiesMask.set(index);
-			return Entity.fromLong(entities[index]);
-		} else {
-			final int index = size;
-			growToIndex(index);
-			entities[index] = pack(index, 0);
+		if(recycledIndexesSize == 0) {
+			final int index = generationsSize++;
+			growGenerationsToIndex(index);
 			aliveEntitiesMask.set(index);
 			return new Entity(index, 0);
+		} else {
+			final int index = recycledIndexes[--recycledIndexesSize];
+			aliveEntitiesMask.set(index);
+			return new Entity(index, generations[index]);
 		}
 	}
 
@@ -58,8 +54,11 @@ public final class EntityManager {
 	 */
 	public void remove(Entity entity) {
 		if(isAlive(entity)) {
-			pushEntityToImplicitList(entity);
-			aliveEntitiesMask.clear(entity.index());
+			final int index = entity.index();
+			++generations[index];
+			growRecycledIndexesToIndex(recycledIndexesSize);
+			recycledIndexes[recycledIndexesSize++] = index;
+			aliveEntitiesMask.clear(index);
 		}
 	}
 
@@ -71,7 +70,7 @@ public final class EntityManager {
 	 *
 	 * <p><b>ВНИМАНИЕ!</b> Данный метод не является безопасным по следующим причинам:
 	 * <ul>
-	 *     <li>Метод рабоатет медленно. Его сложность выполнения метода - O(n), где n - кол-во мертвых сущностей, зарезервированных для переиспользования.</li>
+	 *     <li>Метод работает медленно. Его сложность выполнения - O(n), где n - кол-во мертвых сущностей, зарезервированных для переиспользования.</li>
 	 *     <li>Метод может вызвать перерасход памяти, если {@link Entity#index()} возрождаемой сущности больше чем {@link #entityIndexHighWaterMark()}</li>
 	 *     <li>Метод может нарушить гарантию метода {@link #create()}. Если возродить ранее удаленную сущность ({@link #remove(Entity)}),
 	 *     то счетчик поколений ({@link Entity#generation()}) для всех сущностей с данным индексом будет сброшен до значения поколения передаваемой сущности.</li>
@@ -84,45 +83,30 @@ public final class EntityManager {
 	 * @throws NullPointerException если entity равен null.
 	 */
 	public void unsafeRevive(Entity entity) {
-		if(hasAliveEntityWith(entity.index()))
-			throw new IllegalStateException("There is already a living entity with index " + entity.index());
+		final int entityIndex = entity.index();
+		if(hasAliveEntityWith(entityIndex))
+			throw new IllegalStateException("There is already a living entity with index " + entityIndex);
 
-		int previousEntityIndex = -1;
-		int entityIndex = head;
-		while(entityIndex != -1 && entityIndex != entity.index()) {
-			previousEntityIndex = entityIndex;
-			entityIndex = extractIndex(entities[entityIndex]);
-		}
-
-		if(entityIndex == -1) {
-			previousEntityIndex = size;
-			entityIndex = entity.index();
-			growToIndex(entityIndex);
-			if(entityIndex > previousEntityIndex) {
-				if(head == -1)
-					head = previousEntityIndex;
-				else
-					entities[tail] = pack(previousEntityIndex, extractGeneration(entities[tail]));
-				tail = entityIndex - 1;
-				entities[tail] = pack(-1, 0);
-				while(previousEntityIndex < tail) {
-					entities[previousEntityIndex] = pack(previousEntityIndex + 1, 0);
-					++previousEntityIndex;
-				}
+		for(int i = 0; i < recycledIndexesSize; ++i) {
+			if(recycledIndexes[i] == entityIndex) {
+				recycledIndexes[i] = recycledIndexes[--recycledIndexesSize];
+				break;
 			}
-		} else if(entityIndex == head && entityIndex == tail) {
-			head = -1;
-			tail = -1;
-		} else if(entityIndex == head) {
-			head = extractIndex(entities[entityIndex]);
-		} else if(entityIndex == tail) {
-			tail = previousEntityIndex;
-			entities[previousEntityIndex] = pack(-1, extractGeneration(entities[previousEntityIndex]));
-		} else {
-			entities[previousEntityIndex] = pack(extractIndex(entities[entityIndex]), extractGeneration(entities[previousEntityIndex]));
 		}
 
-		entities[entityIndex] = Entity.toLong(entity);
+		if(entityIndex >= generationsSize) {
+			int newRecycledIndexesCount = entityIndex - generationsSize;
+			if(newRecycledIndexesCount > 0) {
+				growRecycledIndexesToIndex(recycledIndexesSize + newRecycledIndexesCount);
+				for(int i = generationsSize, j = recycledIndexesSize; i < entityIndex; ++i, ++j)
+					recycledIndexes[j] = i;
+				recycledIndexesSize += newRecycledIndexesCount;
+			}
+			generationsSize = entityIndex + 1;
+			growGenerationsToIndex(entityIndex);
+		}
+
+		generations[entityIndex] = entity.generation();
 		aliveEntitiesMask.set(entityIndex);
 	}
 
@@ -137,8 +121,8 @@ public final class EntityManager {
 	 */
 	public boolean isAlive(Entity entity) {
 		return entity != null
-					   && entity.index() < size
-					   && extractGeneration(entities[entity.index()]) == entity.generation()
+					   && entity.index() < generationsSize
+					   && generations[entity.index()] == entity.generation()
 					   && aliveEntitiesMask.get(entity.index());
 	}
 
@@ -160,14 +144,14 @@ public final class EntityManager {
 	 */
 	public Entity getEntityByIndex(int index) {
 		int generation = 0;
-		if(index < size) generation = extractGeneration(entities[index]);
+		if(index < generationsSize) generation = generations[index];
 		return new Entity(index, generation);
 	}
 
 	/**
 	 * <p>Возвращает кол-во всех зарезервированных индексов сущностей внутри данного менеджера сущностей.</p>
 	 * <p>
-	 *     Уточнения по поведению метода:
+	 *     Уточнения к поведению метода:
 	 *     <ol>
 	 *         <li>Если ни одной сущности не было создано - возвращает 0.</li>
 	 *         <li>При удалении сущностей - возвращаемое значение не уменьшается.</li>
@@ -176,7 +160,7 @@ public final class EntityManager {
 	 * </p>
 	 */
 	public int entityIndexHighWaterMark() {
-		return size;
+		return generationsSize;
 	}
 
 	/**
@@ -193,82 +177,51 @@ public final class EntityManager {
 		if (o == null || getClass() != o.getClass()) return false;
 		EntityManager other = (EntityManager) o;
 
-		boolean result = size == other.size && aliveEntitiesMask.equals(other.aliveEntitiesMask);
-		for(int i = 0; i < size && result; ++i) result = entities[i] == other.entities[i];
+		boolean result = generationsSize == other.generationsSize && aliveEntitiesMask.equals(other.aliveEntitiesMask);
+		for(int i = 0; i < generationsSize && result; ++i) result = generations[i] == other.generations[i];
 		return result;
 	}
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hash(size, aliveEntitiesMask);
-		result = 31 * result + Arrays.hashCode(entities);
+		int result = Objects.hash(generationsSize, aliveEntitiesMask);
+		for(int i = 0; i < generationsSize; ++i) result = 31 * result + generations[i];
 		return result;
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder result = new StringBuilder("EntityManager{ totalEntities: ")
-				.append(size)
-				.append(", alive: [");
+		StringBuilder result = new StringBuilder("EntityManager{ totalEntities: ").append(generationsSize).append(", alive: [");
 
-		for(int i = 0; i < size; ++i) {
-			long packedEntity = entities[i];
+		for(int i = 0; i < generationsSize; ++i) {
+			long generation = generations[i];
 			if(aliveEntitiesMask.get(i)) {
-				result.append("{index: ")
-						.append(i)
-						.append(", generation: ")
-						.append(extractGeneration(packedEntity))
-						.append("},");
+				result.append("{index: ").append(i).append(", generation: ").append(generation).append("},");
 			}
 		}
 		result.append("], notAlive: [");
 
-		for(int i = 0; i < size; ++i) {
-			long packedEntity = entities[i];
+		for(int i = 0; i < generationsSize; ++i) {
+			long generation = generations[i];
 			if(!aliveEntitiesMask.get(i)) {
-				result.append("{index: ")
-						.append(i)
-						.append(", generation: ")
-						.append(extractGeneration(packedEntity))
-						.append("},");
+				result.append("{index: ").append(i).append(", generation: ").append(generation).append("},");
 			}
 		}
-		result.append("], aliveEntitiesMask: ")
-				.append(aliveEntitiesMask)
-				.append('}');
+		result.append("], aliveEntitiesMask: ").append(aliveEntitiesMask).append('}');
 
 		return result.toString();
 	}
 
 
-	private long pack(int index, int generation) {
-		return (long)generation << 32 | ((long)index & 0xFFFFFFFFL);
-	}
-
-	private int extractGeneration(long entity) {
-		return (int)(entity >>> 32);
-	}
-
-	private int extractIndex(long entity) {
-		return (int)entity;
-	}
-
-	private void pushEntityToImplicitList(Entity entity) {
-		final int index = entity.index();
-		if(tail != -1)
-			entities[tail] = pack(index, extractGeneration(entities[tail]));
-		else
-			head = index;
-		tail = index;
-		entities[index] = pack(-1, entity.generation() + 1);
-	}
-
-
-	private void growToIndex(int index) {
-		size = index + 1;
-		if(size > entities.length)
-			entities = Arrays.copyOf(entities, calculateArrayCapacity(size));
+	private void growGenerationsToIndex(int index) {
+		if(index >= generations.length)
+			generations = Arrays.copyOf(generations, calculateArrayCapacity(index + 1));
 		aliveEntitiesMask.growToIndex(calculateBitsCapacity(index));
+	}
+
+	private void growRecycledIndexesToIndex(int index) {
+		if(index >= recycledIndexes.length)
+			recycledIndexes = Arrays.copyOf(recycledIndexes, calculateArrayCapacity(index + 1));
 	}
 
 	private int calculateArrayCapacity(int size) {
