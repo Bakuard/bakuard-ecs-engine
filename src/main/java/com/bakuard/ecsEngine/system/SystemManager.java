@@ -140,10 +140,10 @@ public final class SystemManager {
 	 * Обновляет все системы в группе в порядке их добавления в группу. Если группы с таким именем
 	 * не существует - метод ничего не делает.
 	 */
-	public void updateGroup(String groupName, GameTime gameTime, GameLoop gameLoop, EventManager eventManager, World world) {
+	public void updateGroup(String groupName, ExecutionContext context) {
 		DynamicArray<SystemMeta> group = groups.get(groupName);
 		if(group != null) {
-			group.forEach(systemMeta -> systemMeta.system().update(systemMeta, this, gameTime, gameLoop, eventManager, world));
+			group.forEach(systemMeta -> systemMeta.system().update(systemMeta, context));
 		}
 	}
 
