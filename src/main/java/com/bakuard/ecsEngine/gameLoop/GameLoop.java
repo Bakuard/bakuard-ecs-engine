@@ -2,6 +2,7 @@ package com.bakuard.ecsEngine.gameLoop;
 
 import com.bakuard.ecsEngine.World;
 import com.bakuard.ecsEngine.event.EventManager;
+import com.bakuard.ecsEngine.system.ExecutionContext;
 import com.bakuard.ecsEngine.system.SystemManager;
 
 public final class GameLoop {
@@ -33,11 +34,9 @@ public final class GameLoop {
 					EventManager eventManager,
 					World world) {
 		if(numberUpdatePerSecond <= 0 || numberUpdatePerSecond > 1000) {
-			throw new IllegalArgumentException(
-					"Expected: numberUpdatePerSecond > 0 || numberUpdatePerSecond <= 1000. " +
-					"Actual: " + numberUpdatePerSecond);
+			throw new IllegalArgumentException("Expected: numberUpdatePerSecond > 0 && numberUpdatePerSecond <= 1000. Actual: " + numberUpdatePerSecond);
 		} else if(maxFrameSkip <= 0) {
-			throw new IllegalArgumentException("Expected: maxFrameSkip can't be less then zero. Actual: " + maxFrameSkip);
+			throw new IllegalArgumentException("Expected: maxFrameSkip can't be less than zero. Actual: " + maxFrameSkip);
 		}
 
 		this.numberUpdatePerSecond = numberUpdatePerSecond;
@@ -51,7 +50,7 @@ public final class GameLoop {
 	public void start() {
 		if(currentState == State.STOP) {
 			currentState = State.RUN;
-			Thread thread = new Thread(this::run);
+			Thread thread = new Thread(this::run, "ECS-GameLoop-Thread");
 			thread.start();
 		}
 	}
@@ -73,34 +72,34 @@ public final class GameLoop {
 	private void run() {
 		final SystemManager systemManager = this.systemManager;
 		final EventManager eventManager = this.eventManager;
-		final World world = this.world;
 		final GameTimeImpl gameTime = new GameTimeImpl(1000L / numberUpdatePerSecond);
+		final ExecutionContext context = new ExecutionContext(this.world, systemManager, eventManager, this, gameTime);
 
 		try {
 			eventManager.flushBufferOfAsyncEvents();
-			systemManager.updateGroup(INIT_GROUP, gameTime, this, eventManager, world);
+			systemManager.updateGroup(INIT_GROUP, context);
 
 			final long updateInterval = gameTime.getUpdateIntervalInMillis();
 			long delta = updateInterval; //кол-во миллисекунд прошедшее с прошлого обновления
 			while(currentState == State.RUN) {
 				final long lastTime = java.lang.System.currentTimeMillis();
 				eventManager.flushBufferOfAsyncEvents();
-				systemManager.updateGroup(INPUT_GROUP, gameTime, this, eventManager, world);
+				systemManager.updateGroup(INPUT_GROUP, context);
 				for(int i = 0; delta >= updateInterval && i < maxFrameSkip; ++i) {
-					systemManager.updateGroup(WORK_GROUP, gameTime, this, eventManager, world);
+					systemManager.updateGroup(WORK_GROUP, context);
 					delta -= updateInterval;
 				}
-				systemManager.updateGroup(OUTPUT_GROUP, gameTime, this, eventManager, world);
+				systemManager.updateGroup(OUTPUT_GROUP, context);
 				final long elapsedTime = java.lang.System.currentTimeMillis() - lastTime;
 				delta += elapsedTime;
 
 				gameTime.increaseTime(elapsedTime);
 			}
 
-			systemManager.updateGroup(SHUTDOWN_GROUP, gameTime, this, eventManager, world);
+			systemManager.updateGroup(SHUTDOWN_GROUP, context);
 		} catch(Exception e) {
 			currentState = State.SHUTDOWN;
-			handler.handle(gameTime, eventManager, world, e);
+			handler.handle(context, e);
 		} finally {
 			currentState = State.STOP;
 		}

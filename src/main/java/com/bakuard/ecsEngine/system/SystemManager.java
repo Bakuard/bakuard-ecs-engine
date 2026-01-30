@@ -1,10 +1,6 @@
 package com.bakuard.ecsEngine.system;
 
 import com.bakuard.collections.DynamicArray;
-import com.bakuard.ecsEngine.World;
-import com.bakuard.ecsEngine.event.EventManager;
-import com.bakuard.ecsEngine.gameLoop.GameLoop;
-import com.bakuard.ecsEngine.gameLoop.GameTime;
 
 import java.util.HashMap;
 
@@ -20,21 +16,19 @@ import java.util.HashMap;
  *    обновить за раз все системы принадлежащие одной и той же группе.</li>
  * </ol>
  * <p>
- *     <b>ВАЖНО!</b> Если вы вызвали {@link #updateGroup(String, GameTime, GameLoop, EventManager, World)}
+ *     <b>ВАЖНО!</b> Если вы вызвали {@link #updateGroup(String, ExecutionContext)}
  *     и затем, внутри одной из обновляемых систем этой группы, пытаетесь изменить состав этой же самой группы - то
- *     результаты этих изменений не будут передоваться в {@link System#update(SystemMeta, SystemManager, GameTime, GameLoop, EventManager, World)}
- *     обновляемых систем, пока не завершится текущий вызов {@link #updateGroup(String, GameTime, GameLoop, EventManager, World)}.
+ *     результаты этих изменений не будут передоваться в {@link System#update(SystemMeta, ExecutionContext)}
+ *     обновляемых систем, пока не завершится текущий вызов {@link #updateGroup(String, ExecutionContext)}.
  * </p>
  */
 public final class SystemManager {
 
-	private record RegisteredSystem(String systemName, System system) {}
-
-	private final DynamicArray<RegisteredSystem> registeredSystems;
+	private final HashMap<String, System> registeredSystems;
 	private final HashMap<String, DynamicArray<SystemMeta>> groups;
 
 	public SystemManager() {
-		this.registeredSystems = new DynamicArray<>();
+		this.registeredSystems = new HashMap<>();
 		this.groups = new HashMap<>();
 	}
 
@@ -44,11 +38,8 @@ public final class SystemManager {
 	 * @return ссылку на этот же объект.
 	 */
 	public SystemManager registerSystem(String systemName, System system) {
-		int systemIndex = registeredSystems.linearSearch(rs -> rs.systemName().equals(systemName));
-		if(systemIndex == -1) {
-			registeredSystems.addLast(new RegisteredSystem(systemName, system));
-		} else {
-			registeredSystems.replace(systemIndex, new RegisteredSystem(systemName, system));
+		System oldSystem = registeredSystems.put(systemName, system);
+		if(oldSystem != null) {
 			groups.replaceAll((key, group) ->
 				group.cloneAndMap(
 						(systemMeta, index) -> systemMeta.systemName().equals(systemName) ?
@@ -127,7 +118,7 @@ public final class SystemManager {
 	 * @return ссылку на этот же объект.
 	 */
 	public SystemManager removeSystem(String systemName) {
-		registeredSystems.removeIf((rs, index) -> rs.systemName().equals(systemName));
+		registeredSystems.remove(systemName);
 		groups.replaceAll((key, group) -> {
 			DynamicArray<SystemMeta> newGroup = new DynamicArray<>(group);
 			removeFromGroup(newGroup, systemName);
@@ -140,20 +131,20 @@ public final class SystemManager {
 	 * Обновляет все системы в группе в порядке их добавления в группу. Если группы с таким именем
 	 * не существует - метод ничего не делает.
 	 */
-	public void updateGroup(String groupName, GameTime gameTime, GameLoop gameLoop, EventManager eventManager, World world) {
+	public void updateGroup(String groupName, ExecutionContext context) {
 		DynamicArray<SystemMeta> group = groups.get(groupName);
 		if(group != null) {
-			group.forEach(systemMeta -> systemMeta.system().update(systemMeta, this, gameTime, gameLoop, eventManager, world));
+			group.forEach(systemMeta -> systemMeta.system().update(systemMeta, context));
 		}
 	}
 
 
 	private System tryGetSystem(String systemName) {
-		RegisteredSystem regSystem = registeredSystems.linearSearchObj(rs -> rs.systemName().equals(systemName));
-		if(regSystem == null) {
+		System system = registeredSystems.get(systemName);
+		if(system == null) {
 			throw new UnregisteredSystemException("System with name='" + systemName + "' is not registered.");
 		}
-		return regSystem.system();
+		return system;
 	}
 
 	private void removeFromGroup(DynamicArray<SystemMeta> group, String systemName) {
@@ -163,9 +154,7 @@ public final class SystemManager {
 
 	private DynamicArray<SystemMeta> copyOrCreateGroup(String groupName) {
 		DynamicArray<SystemMeta> group = groups.get(groupName);
-		if(group == null) group = new DynamicArray<>();
-		else group = new DynamicArray<>(group);
-		return group;
+		return group == null ? new DynamicArray<>() : new DynamicArray<>(group);
 	}
 
 	private void updateIndexAndSizeForEachSystem(DynamicArray<SystemMeta> group) {
