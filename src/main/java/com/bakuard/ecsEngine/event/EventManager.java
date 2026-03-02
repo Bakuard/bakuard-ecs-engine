@@ -45,6 +45,10 @@ public final class EventManager {
 		return getEventConsumer(consumerName).getAllEvents();
 	}
 
+	public void clear(String eventConsumer) {
+		getEventConsumer(eventConsumer).clear();
+	}
+
 
 	public void publishAsyncEvent(String eventName, Object eventPayload) {
 		try {
@@ -128,7 +132,6 @@ public final class EventManager {
 			return events;
 		}
 
-
 		boolean canContainEventsWithName(String eventName) {
 			return eventNames.contains(eventName);
 		}
@@ -139,6 +142,10 @@ public final class EventManager {
 			} else {
 				events.addLastOrSkip(event);
 			}
+		}
+
+		void clear() {
+			events.clear();
 		}
 	}
 }
