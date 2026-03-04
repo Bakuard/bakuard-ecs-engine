@@ -4,6 +4,8 @@ import com.bakuard.collections.Bits;
 import com.bakuard.collections.DynamicArray;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
+import com.bakuard.ecsEngine.exception.DeadEntityException;
+import com.bakuard.ecsEngine.exception.DuplicateUniqueTagException;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -49,7 +51,7 @@ class TagsManagerTest {
 			attachTag(entity, tag):
 			 some entities is not alive,
 			 deadEntity.index() == aliveEntity.index()
-			 => doesn't change any entity
+			 => doesn't change any entity, throw exception
 			""")
 	@Test
 	public void attachTag2() {
@@ -59,14 +61,14 @@ class TagsManagerTest {
 		entityManager.remove(deadEntity);
 		Entity aliveEntity = entityManager.create();
 
-		tagsManager.attachTag(deadEntity, "A");
-		tagsManager.attachTag(deadEntity, "B");
-		tagsManager.attachTag(deadEntity, "C");
 		tagsManager.attachTag(aliveEntity, "A");
 		tagsManager.attachTag(aliveEntity, "B");
 		tagsManager.attachTag(aliveEntity, "C");
 
 		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThatThrownBy(() -> tagsManager.attachTag(deadEntity, "A")).isInstanceOf(DeadEntityException.class);
+		assertions.assertThatThrownBy(() -> tagsManager.attachTag(deadEntity, "B")).isInstanceOf(DeadEntityException.class);
+		assertions.assertThatThrownBy(() -> tagsManager.attachTag(deadEntity, "C")).isInstanceOf(DeadEntityException.class);
 		assertions.assertThat(tagsManager.hasTag(deadEntity, "A")).isFalse();
 		assertions.assertThat(tagsManager.hasTag(deadEntity, "B")).isFalse();
 		assertions.assertThat(tagsManager.hasTag(deadEntity, "C")).isFalse();
@@ -126,11 +128,10 @@ class TagsManagerTest {
 		Entity aliveEntity = entityManager.create();
 		tagsManager.attachTags(aliveEntity, "A", "B", "C");
 
-		tagsManager.detachTag(deadEntity, "A");
-		tagsManager.detachTag(deadEntity, "B");
-		tagsManager.detachTag(deadEntity, "C");
-
 		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThatThrownBy(() -> tagsManager.detachTag(deadEntity, "A")).isInstanceOf(DeadEntityException.class);
+		assertions.assertThatThrownBy(() -> tagsManager.detachTag(deadEntity, "B")).isInstanceOf(DeadEntityException.class);
+		assertions.assertThatThrownBy(() -> tagsManager.detachTag(deadEntity, "C")).isInstanceOf(DeadEntityException.class);
 		assertions.assertThat(tagsManager.hasTag(deadEntity, "A")).isFalse();
 		assertions.assertThat(tagsManager.hasTag(deadEntity, "B")).isFalse();
 		assertions.assertThat(tagsManager.hasTag(deadEntity, "C")).isFalse();
@@ -209,9 +210,8 @@ class TagsManagerTest {
 		Entity aliveEntity = entityManager.create();
 		tagsManager.attachTags(aliveEntity, "A", "B", "C", "D", "E", "F");
 
-		tagsManager.detachAllTags(deadEntity);
-
 		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThatThrownBy(() -> tagsManager.detachAllTags(deadEntity)).isInstanceOf(DeadEntityException.class);
 		assertions.assertThat(tagsManager.hasTag(aliveEntity, "A")).isTrue();
 		assertions.assertThat(tagsManager.hasTag(aliveEntity, "B")).isTrue();
 		assertions.assertThat(tagsManager.hasTag(aliveEntity, "C")).isTrue();
@@ -542,21 +542,23 @@ class TagsManagerTest {
 			attachUniqueTag(entity, uniqueTag):
 			 entity is not alive,
 			 there is no entity with this unique tag
-			 => getUniqueTagByEntity(entity) return null,
-			    getEntityByUniqueTag(uniqueTag) return null
+			 => throw exception,
+			    getUniqueTagByEntity(entity) return null,
+			    getEntityByUniqueTag(uniqueTag) return null,
+			    hasUniqueTag(entity, uniqueTag) return false
 			""")
 	@Test
 	public void attachUniqueTag2() {
 		EntityManager entityManager = new EntityManager();
 		TagsManager tagsManager = new TagsManager(entityManager);
-		Entity entityA = entityManager.create();
-		entityManager.remove(entityA);
-
-		tagsManager.attachUniqueTag(entityA, "A");
+		Entity deadEntity = entityManager.create();
+		entityManager.remove(deadEntity);
 
 		SoftAssertions assertions = new SoftAssertions();
-		assertions.assertThat(tagsManager.getUniqueTagByEntity(entityA)).isNull();
+		assertions.assertThatThrownBy(() -> tagsManager.attachUniqueTag(deadEntity, "A")).isInstanceOf(DeadEntityException.class);
+		assertions.assertThat(tagsManager.getUniqueTagByEntity(deadEntity)).isNull();
 		assertions.assertThat(tagsManager.getEntityByUniqueTag("A")).isNull();
+		assertions.assertThat(tagsManager.hasUniqueTag(deadEntity, "A")).isFalse();
 		assertions.assertAll();
 	}
 
@@ -564,23 +566,26 @@ class TagsManagerTest {
 			attachUniqueTag(entity, uniqueTag):
 			 entity is not alive,
 			 there is entity with this unique tag
-			 => getUniqueTagByEntity(entity) return null,
-			    getEntityByUniqueTag(uniqueTag) return alive entity by this uniqueTag
+			 => throw exception,
+			    getUniqueTagByEntity(entity) return null,
+			    getEntityByUniqueTag(uniqueTag) return alive entity by this uniqueTag,
+			    hasUniqueTag(entity, uniqueTag) return false
 			""")
 	@Test
 	public void attachUniqueTag3() {
 		EntityManager entityManager = new EntityManager();
 		TagsManager tagsManager = new TagsManager(entityManager);
-		Entity entityA = entityManager.create();
-		Entity entityB = entityManager.create();
-		entityManager.remove(entityA);
+		Entity deadEntity = entityManager.create();
+		Entity aliveEntity = entityManager.create();
+		entityManager.remove(deadEntity);
 
-		tagsManager.attachUniqueTag(entityA, "A");
-		tagsManager.attachUniqueTag(entityB, "A");
+		tagsManager.attachUniqueTag(aliveEntity, "A");
 
 		SoftAssertions assertions = new SoftAssertions();
-		assertions.assertThat(tagsManager.getUniqueTagByEntity(entityA)).isNull();
-		assertions.assertThat(tagsManager.getEntityByUniqueTag("A")).isEqualTo(entityB);
+		assertions.assertThatThrownBy(() -> tagsManager.attachUniqueTag(deadEntity, "A")).isInstanceOf(DeadEntityException.class);
+		assertions.assertThat(tagsManager.getUniqueTagByEntity(deadEntity)).isNull();
+		assertions.assertThat(tagsManager.getEntityByUniqueTag("A")).isEqualTo(aliveEntity);
+		assertions.assertThat(tagsManager.hasUniqueTag(deadEntity, "A")).isFalse();
 		assertions.assertAll();
 	}
 

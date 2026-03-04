@@ -8,5 +8,6 @@ module com.bakuard.ecsEngine {
 	exports com.bakuard.ecsEngine.system;
 	exports com.bakuard.ecsEngine.gameLoop;
 	exports com.bakuard.ecsEngine.event;
+	exports com.bakuard.ecsEngine.exception;
 
 }

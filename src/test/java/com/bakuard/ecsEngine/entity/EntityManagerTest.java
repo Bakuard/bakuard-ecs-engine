@@ -1,5 +1,6 @@
 package com.bakuard.ecsEngine.entity;
 
+import com.bakuard.ecsEngine.exception.DeadEntityException;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -50,7 +51,7 @@ class EntityManagerTest {
 			create(), remove(entity):
 			 entity has already been removed,
 			 there is entity with same index
-			 => doesn't remove entity with same index
+			 => doesn't remove entity with same index, throw exception
 			""")
 	@Test
 	void createAndRemove2() {
@@ -60,9 +61,9 @@ class EntityManagerTest {
 
 		manager.remove(removedEntity);
 		Entity newEntity = manager.create();
-		for(int i = 0; i < 10; ++i) manager.remove(removedEntity);
 
 		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThatThrownBy(() -> manager.remove(removedEntity)).isInstanceOf(DeadEntityException.class);
 		assertions.assertThat(newEntity.index()).isEqualTo(removedEntity.index());
 		assertions.assertThat(manager.isAlive(newEntity)).isTrue();
 		assertions.assertThat(newEntity.generation()).isEqualTo(1);
@@ -71,8 +72,9 @@ class EntityManagerTest {
 
 	@DisplayName("""
 			create(), remove(entity):
-			 remove the same entity several time,
+			 entity has already been removed,
 			 create new several entities
+			 => throw exception when remove entity again
 			""")
 	@Test
 	void createAndRemove3() {
@@ -80,12 +82,13 @@ class EntityManagerTest {
 		createEntities(manager, 1000);
 		Entity removedEntity = new Entity(512, 0);
 
-		for(int i = 0; i < 10; ++i) manager.remove(removedEntity);
+		manager.remove(removedEntity);
 		Entity entity1 = manager.create();
 		Entity entity2 = manager.create();
 		Entity entity3 = manager.create();
 
 		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThatThrownBy(() -> manager.remove(removedEntity)).isInstanceOf(DeadEntityException.class);
 		assertions.assertThat(entity1).isEqualTo(new Entity(512, 1));
 		assertions.assertThat(entity2).isEqualTo(new Entity(1000, 0));
 		assertions.assertThat(entity3).isEqualTo(new Entity(1001, 0));

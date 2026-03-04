@@ -2,6 +2,7 @@ package com.bakuard.ecsEngine.entity;
 
 import com.bakuard.collections.Bits;
 import com.bakuard.collections.ReadableBits;
+import com.bakuard.ecsEngine.exception.DeadEntityException;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -50,16 +51,16 @@ public final class EntityManager {
 	}
 
 	/**
-	 * Удаляет сущность. Если переданная сущность уже ранее удалялась, то ничего не делает.
+	 * Удаляет сущность. Если переданная сущность уже ранее удалялась - выбрасывает {@link DeadEntityException}.
 	 */
 	public void remove(Entity entity) {
-		if(isAlive(entity)) {
-			final int index = entity.index();
-			++generations[index];
-			growRecycledIndexesToIndex(recycledIndexesSize);
-			recycledIndexes[recycledIndexesSize++] = index;
-			aliveEntitiesMask.clear(index);
-		}
+		assertIsAlive(entity);
+
+		final int index = entity.index();
+		++generations[index];
+		growRecycledIndexesToIndex(recycledIndexesSize);
+		recycledIndexes[recycledIndexesSize++] = index;
+		aliveEntitiesMask.clear(index);
 	}
 
 	/**
@@ -124,6 +125,13 @@ public final class EntityManager {
 					   && entity.index() < generationsSize
 					   && generations[entity.index()] == entity.generation()
 					   && aliveEntitiesMask.get(entity.index());
+	}
+
+	/**
+	 * <p>Если переданная сущность не является живой (см. {@link #isAlive(Entity)}) - выбрасывает исключение {@link DeadEntityException}.</p>
+	 */
+	public void assertIsAlive(Entity entity) {
+		if(!isAlive(entity)) throw new DeadEntityException("Entity is dead or null: " + entity);
 	}
 
 	/**

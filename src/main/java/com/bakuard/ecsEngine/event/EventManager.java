@@ -2,6 +2,7 @@ package com.bakuard.ecsEngine.event;
 
 import com.bakuard.collections.ReadableLinearStructure;
 import com.bakuard.collections.RingBuffer;
+import com.bakuard.ecsEngine.exception.UnknownEventConsumerException;
 
 import java.util.HashMap;
 import java.util.Set;

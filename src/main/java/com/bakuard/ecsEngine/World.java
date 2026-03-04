@@ -40,12 +40,16 @@ public final class World {
 		entityManager.remove(entity);
 	}
 
-	public void revive(Entity entity) {
+	public void unsafeRevive(Entity entity) {
 		entityManager.unsafeRevive(entity);
 	}
 
 	public boolean isAlive(Entity entity) {
 		return entityManager.isAlive(entity);
+	}
+
+	public void assertIsAlive(Entity entity) {
+		entityManager.assertIsAlive(entity);
 	}
 
 	public boolean hasAliveEntityWith(int index) {
@@ -210,6 +214,10 @@ public final class World {
 
 	public boolean hasUniqueTag(Entity entity, String uniqueTag) {
 		return tagsManager.hasUniqueTag(entity, uniqueTag);
+	}
+
+	public boolean existsUniqueTag(String uniqueTag) {
+		return tagsManager.existsUniqueTag(uniqueTag);
 	}
 
 

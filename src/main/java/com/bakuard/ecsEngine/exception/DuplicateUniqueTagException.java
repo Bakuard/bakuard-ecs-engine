@@ -1,4 +1,4 @@
-package com.bakuard.ecsEngine.component;
+package com.bakuard.ecsEngine.exception;
 
 public class DuplicateUniqueTagException extends RuntimeException {
 	public DuplicateUniqueTagException() {

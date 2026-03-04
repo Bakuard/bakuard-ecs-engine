@@ -22,9 +22,8 @@ public final class CompsManager {
 	}
 
 	public void attachComps(Entity entity, Object... comps) {
-		if(entityManager.isAlive(entity)) {
-			for(Object comp : comps) attachCompIgnoringEntityState(entity, comp, comp.getClass().getName());
-		}
+		entityManager.assertIsAlive(entity);
+		for(Object comp : comps) attachCompIgnoringEntityState(entity, comp, comp.getClass().getName());
 	}
 
 	public <T> void detachComp(Entity entity, Class<T> compType) {
@@ -36,9 +35,8 @@ public final class CompsManager {
 	}
 
 	public void detachAllComps(Entity entity) {
-		if(entityManager.isAlive(entity)) {
-			compPools.forEach((compName, compPool) -> compPool.detachComp(entity));
-		}
+		entityManager.assertIsAlive(entity);
+		compPools.forEach((compName, compPool) -> compPool.detachComp(entity));
 	}
 
 	public void replaceAllComps(Entity entity, Object... comps) {
@@ -48,17 +46,18 @@ public final class CompsManager {
 
 
 	public void attachComp(Entity entity, Object comp, String poolName) {
-		if(entityManager.isAlive(entity)) attachCompIgnoringEntityState(entity, comp, poolName);
+		entityManager.assertIsAlive(entity);
+		attachCompIgnoringEntityState(entity, comp, poolName);
 	}
 
 	public void detachComp(Entity entity, String poolName) {
-		if(entityManager.isAlive(entity)) detachCompIgnoringEntityState(entity, poolName);
+		entityManager.assertIsAlive(entity);
+		detachCompIgnoringEntityState(entity, poolName);
 	}
 
 	public void detachComps(Entity entity, String... poolNames) {
-		if(entityManager.isAlive(entity)) {
-			for(String poolName : poolNames) detachCompIgnoringEntityState(entity, poolName);
-		}
+		entityManager.assertIsAlive(entity);
+		for(String poolName : poolNames) detachCompIgnoringEntityState(entity, poolName);
 	}
 
 
@@ -96,12 +95,9 @@ public final class CompsManager {
 
 
 	public <T> T getComp(Entity entity, String poolName) {
-		T result = null;
-		if(entityManager.isAlive(entity)) {
-			CompPool pool = compPools.get(poolName);
-			if(pool != null) result = pool.getComp(entity);
-		}
-		return result;
+		entityManager.assertIsAlive(entity);
+		CompPool pool = compPools.get(poolName);
+		return pool != null ? pool.getComp(entity) : null;
 	}
 
 	public boolean hasComp(Entity entity, String poolName) {

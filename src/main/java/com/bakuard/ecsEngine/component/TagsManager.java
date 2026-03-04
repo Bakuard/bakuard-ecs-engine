@@ -4,6 +4,7 @@ import com.bakuard.collections.Bits;
 import com.bakuard.collections.ReadableLinearStructure;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
+import com.bakuard.ecsEngine.exception.DuplicateUniqueTagException;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,31 +26,30 @@ public final class TagsManager {
 	}
 
 	public void attachTag(Entity entity, String tag) {
-		if(entityManager.isAlive(entity)) attachTagIgnoringEntityState(entity, tag);
+		entityManager.assertIsAlive(entity);
+		attachTagIgnoringEntityState(entity, tag);
 	}
 
 	public void attachTags(Entity entity, String... tags) {
-		if(entityManager.isAlive(entity)) {
-			for(String tag : tags) attachTagIgnoringEntityState(entity, tag);
-		}
+		entityManager.assertIsAlive(entity);
+		for(String tag : tags) attachTagIgnoringEntityState(entity, tag);
 	}
 
 	public void detachTag(Entity entity, String tag) {
-		if(entityManager.isAlive(entity)) detachTagIgnoringEntityState(entity, tag);
+		entityManager.assertIsAlive(entity);
+		detachTagIgnoringEntityState(entity, tag);
 	}
 
 	public void detachTags(Entity entity, String... tags) {
-		if(entityManager.isAlive(entity)) {
-			for(String tag : tags) detachTagIgnoringEntityState(entity, tag);
-		}
+		entityManager.assertIsAlive(entity);
+		for(String tag : tags) detachTagIgnoringEntityState(entity, tag);
 	}
 
 	public void detachAllTags(Entity entity) {
-		if(entityManager.isAlive(entity)) {
-			tagMasks.forEach((key, bits) -> {
-				if(bits.inBound(entity.index())) bits.clear(entity.index());
-			});
-		}
+		entityManager.assertIsAlive(entity);
+		tagMasks.forEach((key, bits) -> {
+			if(bits.inBound(entity.index())) bits.clear(entity.index());
+		});
 	}
 
 	public void detachTagFromAllEntities(String tag) {
@@ -128,15 +128,15 @@ public final class TagsManager {
 
 
 	public void attachUniqueTag(Entity entity, String uniqueTag) {
-		if(entityManager.isAlive(entity)) {
-			Entity relatedEntity = entityByUniqueTag.get(uniqueTag);
-			if(relatedEntity != null && !relatedEntity.equals(entity))
-				throw new DuplicateUniqueTagException("Unique tag '" + uniqueTag + "' already assign to " + relatedEntity);
+		entityManager.assertIsAlive(entity);
 
-			detachUniqueTag(entity);
-			entityByUniqueTag.put(uniqueTag, entity);
-			uniqueTagByEntity.put(entity, uniqueTag);
-		}
+		Entity relatedEntity = entityByUniqueTag.get(uniqueTag);
+		if(relatedEntity != null && !relatedEntity.equals(entity))
+			throw new DuplicateUniqueTagException("Unique tag '" + uniqueTag + "' already assign to " + relatedEntity);
+
+		detachUniqueTag(entity);
+		entityByUniqueTag.put(uniqueTag, entity);
+		uniqueTagByEntity.put(entity, uniqueTag);
 	}
 
 	public void detachUniqueTag(String uniqueTag) {
@@ -157,6 +157,10 @@ public final class TagsManager {
 
 	public boolean hasUniqueTag(Entity entity, String uniqueTag) {
 		return entityManager.isAlive(entity) && entity.equals(entityByUniqueTag.get(uniqueTag));
+	}
+
+	public boolean existsUniqueTag(String uniqueTag) {
+		return entityByUniqueTag.containsKey(uniqueTag);
 	}
 
 

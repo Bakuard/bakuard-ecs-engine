@@ -1,4 +1,4 @@
-package com.bakuard.ecsEngine.event;
+package com.bakuard.ecsEngine.exception;
 
 public class UnknownEventConsumerException extends RuntimeException {
 
