@@ -48,10 +48,6 @@ public final class World {
 		return entityManager.isAlive(entity);
 	}
 
-	public void assertIsAlive(Entity entity) {
-		entityManager.assertIsAlive(entity);
-	}
-
 	public boolean hasAliveEntityWith(int index) {
 		return entityManager.hasAliveEntityWith(index);
 	}
@@ -189,6 +185,10 @@ public final class World {
 
 	public Set<String> getAllTags() {
 		return tagsManager.getAllTags();
+	}
+
+	public Set<String> getAllUniqueTags() {
+		return tagsManager.getAllUniqueTags();
 	}
 
 

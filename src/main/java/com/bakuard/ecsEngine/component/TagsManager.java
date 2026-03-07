@@ -104,6 +104,10 @@ public final class TagsManager {
 		return new HashSet<>(tagMasks.keySet());
 	}
 
+	public Set<String> getAllUniqueTags() {
+		return new HashSet<>(entityByUniqueTag.keySet());
+	}
+
 
 	public void excludeEntityIndexesWithout(Bits entityIndexes, ReadableLinearStructure<String> tagNames) {
 		for(int i = 0; i < tagNames.size(); ++i) {
