@@ -4,6 +4,7 @@ import com.bakuard.collections.Bits;
 import com.bakuard.collections.DynamicArray;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
+import com.bakuard.ecsEngine.exception.DeadEntityException;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -46,7 +47,7 @@ class CompsManagerTest {
 			detachAllComps(entity):
 			 entity is alive,
 			 deadEntity.index() == aliveEntity.index()
-			 => doesn't change any entity
+			 => doesn't change any entity, throw exception
 			""")
 	@Test
 	public void detachAllComps2() {
@@ -57,9 +58,8 @@ class CompsManagerTest {
 		Entity aliveEntity = entityManager.create();
 		compsManager.attachComps(aliveEntity, new A(), new B(), new C(), new D(), new E(), new F());
 
-		compsManager.detachAllComps(deadEntity);
-
 		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThatThrownBy(() -> compsManager.detachAllComps(deadEntity)).isInstanceOf(DeadEntityException.class);
 		assertions.assertThat(compsManager.hasComp(aliveEntity, A.class)).isTrue();
 		assertions.assertThat(compsManager.hasComp(aliveEntity, B.class)).isTrue();
 		assertions.assertThat(compsManager.hasComp(aliveEntity, C.class)).isTrue();

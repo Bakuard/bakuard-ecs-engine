@@ -1,4 +1,4 @@
-package com.bakuard.ecsEngine.system;
+package com.bakuard.ecsEngine.exception;
 
 public class UnregisteredSystemException extends RuntimeException {
 

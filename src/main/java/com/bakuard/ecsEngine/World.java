@@ -40,7 +40,7 @@ public final class World {
 		entityManager.remove(entity);
 	}
 
-	public void revive(Entity entity) {
+	public void unsafeRevive(Entity entity) {
 		entityManager.unsafeRevive(entity);
 	}
 
@@ -187,6 +187,10 @@ public final class World {
 		return tagsManager.getAllTags();
 	}
 
+	public Set<String> getAllUniqueTags() {
+		return tagsManager.getAllUniqueTags();
+	}
+
 
 	public void attachUniqueTag(Entity entity, String uniqueTag) {
 		tagsManager.attachUniqueTag(entity, uniqueTag);
@@ -210,6 +214,10 @@ public final class World {
 
 	public boolean hasUniqueTag(Entity entity, String uniqueTag) {
 		return tagsManager.hasUniqueTag(entity, uniqueTag);
+	}
+
+	public boolean existsUniqueTag(String uniqueTag) {
+		return tagsManager.existsUniqueTag(uniqueTag);
 	}
 
 

@@ -2,6 +2,7 @@ package com.bakuard.ecsEngine.event;
 
 import com.bakuard.collections.ReadableLinearStructure;
 import com.bakuard.collections.RingBuffer;
+import com.bakuard.ecsEngine.exception.UnknownEventConsumerException;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -43,6 +44,10 @@ public final class EventManager {
 
 	public ReadableLinearStructure<Event> getAllEvents(String consumerName) {
 		return getEventConsumer(consumerName).getAllEvents();
+	}
+
+	public void clear(String eventConsumer) {
+		getEventConsumer(eventConsumer).clear();
 	}
 
 
@@ -128,7 +133,6 @@ public final class EventManager {
 			return events;
 		}
 
-
 		boolean canContainEventsWithName(String eventName) {
 			return eventNames.contains(eventName);
 		}
@@ -139,6 +143,10 @@ public final class EventManager {
 			} else {
 				events.addLastOrSkip(event);
 			}
+		}
+
+		void clear() {
+			events.clear();
 		}
 	}
 }

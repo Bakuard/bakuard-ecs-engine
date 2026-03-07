@@ -23,7 +23,7 @@ Minimal Java version: 25
 <dependency>
     <groupId>com.bakuard</groupId>
     <artifactId>ecsEngine</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1</version>
 </dependency>
 ```
 

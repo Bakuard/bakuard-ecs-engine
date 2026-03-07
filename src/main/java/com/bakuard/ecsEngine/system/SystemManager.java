@@ -1,6 +1,7 @@
 package com.bakuard.ecsEngine.system;
 
 import com.bakuard.collections.DynamicArray;
+import com.bakuard.ecsEngine.exception.UnregisteredSystemException;
 
 import java.util.HashMap;
 
