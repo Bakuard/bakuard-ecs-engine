@@ -161,8 +161,18 @@ public final class CompsManager {
 	}
 
 
+	public void merge(CompsManager src, Iterable<String> mergedPools, MergeStrategy<Entity, ?> mergeStrategy) {
+		final SparseSet emptyCompPool = new SparseSet();
+		for(String poolName : mergedPools) {
+			CompPool originPool = getOrCreateCompPool(poolName);
+			CompPool srcPool = src.compPools.getOrDefault(poolName, emptyCompPool);
+			originPool.merge(srcPool, mergeStrategy);
+		}
+	}
+
+
 	private void attachCompIgnoringEntityState(Entity entity, Object comp, String poolName) {
-		compPools.computeIfAbsent(poolName, compType -> new SparseSet()).attachComp(entity, comp);
+		getOrCreateCompPool(poolName).attachComp(entity, comp);
 	}
 
 	private void detachCompIgnoringEntityState(Entity entity, String poolName) {
@@ -173,6 +183,10 @@ public final class CompsManager {
 	private boolean hasComponentIgnoringEntityState(Entity entity, String poolName) {
 		CompPool compPool = compPools.get(poolName);
 		return compPool != null && compPool.hasComp(entity);
+	}
+
+	private CompPool getOrCreateCompPool(String poolName) {
+		return compPools.computeIfAbsent(poolName, pn -> new SparseSet());
 	}
 
 	private String[] map(Class<?>... compTypes) {

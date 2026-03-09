@@ -64,7 +64,7 @@ public final class EntityManager {
 	}
 
 	/**
-	 * <p>Если нет живой ({@link #isAlive(Entity)}) сущности с таким же индексом - данная сущность становится живой, включая её {@link Entity#generation()}.
+	 * <p>Если нет живой ({@link #isAlive(Entity)}<code> == false</code>) сущности с таким же индексом - данная сущность становится живой, включая её {@link Entity#generation()}.
 	 * Если уже есть живая сущность с таким же индексом - выбрасывает исключение.</p>
 	 *
 	 * <p><b>Назначение данного метода</b> - облегчить тестирование в тех случаях, когда требуется точно восстановить определенное состояние мира.</p>
@@ -80,7 +80,7 @@ public final class EntityManager {
 	 * <b>Используйте данный метод, только если хорошо понимаете, что делаете.</b>
 	 * </p>
 	 *
-	 * @throws IllegalStateException если уже есть живая сущность с таким же индексом ({@link #isAlive(Entity)}).
+	 * @throws IllegalStateException если уже есть живая сущность с таким же индексом ({@link #isAlive(Entity)}<code> == true</code>).
 	 * @throws NullPointerException если entity равен null.
 	 */
 	public void unsafeRevive(Entity entity) {
@@ -177,6 +177,18 @@ public final class EntityManager {
 	 */
 	public ReadableBits getAliveEntitiesMask() {
 		return aliveEntitiesMask;
+	}
+
+	/**
+	 * <p>Полностью копирует состояние переданного менеджера сущностей.</p>
+	 */
+	public EntityManager copyFullStateFrom(EntityManager src) {
+		this.generations = src.generations.clone();
+		this.recycledIndexes = src.recycledIndexes.clone();
+		this.generationsSize = src.generationsSize;
+		this.recycledIndexesSize = src.recycledIndexesSize;
+		this.aliveEntitiesMask.copyFullStateFrom(src.aliveEntitiesMask);
+		return this;
 	}
 
 	@Override

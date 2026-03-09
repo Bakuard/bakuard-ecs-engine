@@ -23,6 +23,8 @@ public interface CompPool {
 
 	public ReadableBits getEntityIndexesMask();
 
+	public <T> void merge(CompPool src, MergeStrategy<Entity, T> strategy);
+
 
 	public static interface EntryIterator<E> {
 		public boolean next();

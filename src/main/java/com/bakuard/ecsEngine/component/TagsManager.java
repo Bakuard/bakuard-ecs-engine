@@ -14,15 +14,15 @@ import java.util.Set;
 public final class TagsManager {
 
 	private final EntityManager entityManager;
-	private final HashMap<String, Bits> tagMasks;
-	private final HashMap<String, Entity> entityByUniqueTag;
-	private final HashMap<Entity, String> uniqueTagByEntity;
+	private HashMap<String, Bits> tagMasks;
+	private HashMap<String, Entity> uniqueTagToEntity;
+	private HashMap<Entity, String> entityToUniqueTag;
 
 	public TagsManager(EntityManager entityManager) {
 		this.entityManager = entityManager;
 		this.tagMasks = new HashMap<>();
-		this.entityByUniqueTag = new HashMap<>();
-		this.uniqueTagByEntity = new HashMap<>();
+		this.uniqueTagToEntity = new HashMap<>();
+		this.entityToUniqueTag = new HashMap<>();
 	}
 
 	public void attachTag(Entity entity, String tag) {
@@ -105,7 +105,7 @@ public final class TagsManager {
 	}
 
 	public Set<String> getAllUniqueTags() {
-		return new HashSet<>(entityByUniqueTag.keySet());
+		return new HashSet<>(uniqueTagToEntity.keySet());
 	}
 
 
@@ -134,37 +134,87 @@ public final class TagsManager {
 	public void attachUniqueTag(Entity entity, String uniqueTag) {
 		entityManager.assertIsAlive(entity);
 
-		Entity relatedEntity = entityByUniqueTag.get(uniqueTag);
+		Entity relatedEntity = uniqueTagToEntity.get(uniqueTag);
 		if(relatedEntity != null && !relatedEntity.equals(entity))
 			throw new DuplicateUniqueTagException("Unique tag '" + uniqueTag + "' already assign to " + relatedEntity);
 
 		detachUniqueTag(entity);
-		entityByUniqueTag.put(uniqueTag, entity);
-		uniqueTagByEntity.put(entity, uniqueTag);
+		uniqueTagToEntity.put(uniqueTag, entity);
+		entityToUniqueTag.put(entity, uniqueTag);
 	}
 
 	public void detachUniqueTag(String uniqueTag) {
-		uniqueTagByEntity.remove(entityByUniqueTag.remove(uniqueTag));
+		entityToUniqueTag.remove(uniqueTagToEntity.remove(uniqueTag));
 	}
 
 	public void detachUniqueTag(Entity entity) {
-		entityByUniqueTag.remove(uniqueTagByEntity.remove(entity));
+		uniqueTagToEntity.remove(entityToUniqueTag.remove(entity));
 	}
 
 	public Entity getEntityByUniqueTag(String uniqueTag) {
-		return entityByUniqueTag.get(uniqueTag);
+		return uniqueTagToEntity.get(uniqueTag);
 	}
 
 	public String getUniqueTagByEntity(Entity entity) {
-		return uniqueTagByEntity.get(entity);
+		return entityToUniqueTag.get(entity);
 	}
 
 	public boolean hasUniqueTag(Entity entity, String uniqueTag) {
-		return entityManager.isAlive(entity) && entity.equals(entityByUniqueTag.get(uniqueTag));
+		return entityManager.isAlive(entity) && entity.equals(uniqueTagToEntity.get(uniqueTag));
 	}
 
 	public boolean existsUniqueTag(String uniqueTag) {
-		return entityByUniqueTag.containsKey(uniqueTag);
+		return uniqueTagToEntity.containsKey(uniqueTag);
+	}
+
+
+	public void mergeUniqueTags(TagsManager src, MergeStrategy<Entity, String> uniqueTagsMergeStrategy) {
+		final HashMap<String, Entity> uniqueTagToEntityResult = new HashMap<>();
+		final HashMap<Entity, String> entityToUniqueTagResult = new HashMap<>();
+
+		entityToUniqueTag.forEach((entity, originUniqueTag) -> {
+			String srcUniqueTag = src.getUniqueTagByEntity(entity);
+			String resultUniqueTag = uniqueTagsMergeStrategy.merge(entity, originUniqueTag, srcUniqueTag);
+
+			if(resultUniqueTag != null && !resultUniqueTag.equals(originUniqueTag)) {
+				entityToUniqueTagResult.put(entity, resultUniqueTag);
+				uniqueTagToEntityResult.put(resultUniqueTag, entity);
+			}
+		});
+
+		final TagsManager origin = this;
+		src.entityToUniqueTag.forEach((entity, srcUniqueTag) -> {
+			if(origin.entityToUniqueTag.containsKey(entity)) return;
+
+			String resultUniqueTag = uniqueTagsMergeStrategy.merge(entity, null, srcUniqueTag);
+			if(resultUniqueTag != null) {
+				entityToUniqueTagResult.put(entity, resultUniqueTag);
+				uniqueTagToEntityResult.put(resultUniqueTag, entity);
+			}
+		});
+
+		uniqueTagToEntity = uniqueTagToEntityResult;
+		entityToUniqueTag = entityToUniqueTagResult;
+	}
+
+	public void mergeTags(TagsManager src, MergeStrategy<String, Bits> tagsMergeStrategy) {
+		final HashMap<String, Bits> tagMasksResult = new HashMap<>();
+
+		tagMasks.forEach((tagName, originMask) -> {
+			Bits srcMask = src.tagMasks.get(tagName);
+			Bits resultMask = tagsMergeStrategy.merge(tagName, originMask, srcMask);
+			if(resultMask != null) tagMasksResult.put(tagName, new Bits(resultMask));
+		});
+
+		final TagsManager origin = this;
+		src.tagMasks.forEach((tagName, srcMask) -> {
+			if(origin.tagMasks.containsKey(tagName)) return;
+
+			Bits resultMask = tagsMergeStrategy.merge(tagName, null, srcMask);
+			if(resultMask != null) tagMasksResult.put(tagName, new Bits(resultMask));
+		});
+
+		tagMasks = tagMasksResult;
 	}
 
 
