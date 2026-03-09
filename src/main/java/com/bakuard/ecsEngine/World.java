@@ -4,6 +4,7 @@ import com.bakuard.collections.Bits;
 import com.bakuard.ecsEngine.component.CompPool;
 import com.bakuard.ecsEngine.component.CompsManager;
 import com.bakuard.ecsEngine.component.EntityFilter;
+import com.bakuard.ecsEngine.component.MergeCompPoolStrategy;
 import com.bakuard.ecsEngine.component.TagsManager;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
@@ -235,6 +236,13 @@ public final class World {
 		tagsManager.excludeEntityIndexesWith(entityIndexes, entityFilter.getNoneTags());
 
 		return entityIndexes;
+	}
+
+
+	public void merge(World src, Iterable<String> mergedTags, Iterable<String> mergedPools, MergeCompPoolStrategy<?> strategy) {
+		entityManager.copyFullStateFrom(src.entityManager);
+		tagsManager.merge(src.tagsManager, mergedTags);
+		compsManager.merge(src.compsManager, mergedPools, strategy);
 	}
 
 

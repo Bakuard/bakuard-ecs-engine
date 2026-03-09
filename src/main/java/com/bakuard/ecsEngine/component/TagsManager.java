@@ -168,6 +168,19 @@ public final class TagsManager {
 	}
 
 
+	public void merge(TagsManager src, Iterable<String> mergedTags) {
+		entityByUniqueTag.clear();
+		uniqueTagByEntity.clear();
+		entityByUniqueTag.putAll(src.entityByUniqueTag);
+		uniqueTagByEntity.putAll(src.uniqueTagByEntity);
+
+		for(String tag : mergedTags) {
+			Bits srcTagsCopy = new Bits(src.tagMasks.get(tag));
+			tagMasks.put(tag, srcTagsCopy);
+		}
+	}
+
+
 	private void attachTagIgnoringEntityState(Entity entity, String tag) {
 		tagMasks.computeIfAbsent(tag, key -> new Bits(entity.index() + 1))
 				.growToIndex(entity.index())
