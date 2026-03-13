@@ -230,10 +230,19 @@ public final class World {
 	public Bits selectEntityIndexes(EntityFilter entityFilter) {
 		Bits entityIndexes = new Bits(entityManager.getAliveEntitiesMask());
 
-		compsManager.excludeEntityIndexesWithout(entityIndexes, entityFilter.getAllComps());
-		tagsManager.excludeEntityIndexesWithout(entityIndexes, entityFilter.getAllTags());
-		compsManager.excludeEntityIndexesWith(entityIndexes, entityFilter.getNoneComps());
-		tagsManager.excludeEntityIndexesWith(entityIndexes, entityFilter.getNoneTags());
+		if(entityFilter.isWithoutComps()) {
+			compsManager.excludeEntityIndexesWithAny(entityIndexes);
+		} else {
+			compsManager.excludeEntityIndexesWithout(entityIndexes, entityFilter.getAllComps());
+			compsManager.excludeEntityIndexesWith(entityIndexes, entityFilter.getNoneComps());
+		}
+
+		if(entityFilter.isWithoutTags()) {
+			tagsManager.excludeEntityIndexesWithAny(entityIndexes);
+		} else {
+			tagsManager.excludeEntityIndexesWithout(entityIndexes, entityFilter.getAllTags());
+			tagsManager.excludeEntityIndexesWith(entityIndexes, entityFilter.getNoneTags());
+		}
 
 		return entityIndexes;
 	}
