@@ -130,6 +130,10 @@ public final class TagsManager {
 		}
 	}
 
+	public void excludeEntityIndexesWithAny(Bits entityIndexes) {
+		tagMasks.forEach((tagName, mask) -> entityIndexes.andNot(mask));
+	}
+
 
 	public void attachUniqueTag(Entity entity, String uniqueTag) {
 		entityManager.assertIsAlive(entity);

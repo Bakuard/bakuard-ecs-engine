@@ -138,6 +138,10 @@ public final class CompsManager {
 		}
 	}
 
+	public void excludeEntityIndexesWithAny(Bits entityIndexes) {
+		compPools.forEach((poolName, pool) -> entityIndexes.andNot(pool.getEntityIndexesMask()));
+	}
+
 
 	public void registerCompPool(CompPool pool) {
 		registerCompPool(pool, pool.getClass().getName());
