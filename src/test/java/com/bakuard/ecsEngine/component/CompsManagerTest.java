@@ -240,7 +240,7 @@ class CompsManagerTest {
 		compsManager.attachComps(entityC, new B(), new C());
 
 		Bits actual = Bits.filled(100);
-		compsManager.excludeEntityIndexesWithout(actual, DynamicArray.of(B.class).cloneAndMap((Class<B> type, int i) -> type.getName()));
+		compsManager.excludeEntityIndexesWithout(actual, DynamicArray.of(B.class).mappedCopy((Class<B> type, int i) -> type.getName()));
 
 		Assertions.assertThat(actual).isEqualTo(Bits.of(100, 0, 2));
 	}
@@ -266,7 +266,7 @@ class CompsManagerTest {
 
 		compsManager.detachComp(entityD, D.class);
 		Bits actual = Bits.filled(100);
-		compsManager.excludeEntityIndexesWithout(actual, DynamicArray.of(D.class).cloneAndMap((Class<D> type, int i) -> type.getName()));
+		compsManager.excludeEntityIndexesWithout(actual, DynamicArray.of(D.class).mappedCopy((Class<D> type, int i) -> type.getName()));
 
 		Assertions.assertThat(actual).isEqualTo(new Bits(100));
 	}
@@ -290,7 +290,7 @@ class CompsManagerTest {
 		compsManager.attachComps(entityC, new B(), new C());
 
 		Bits actual = Bits.filled(100);
-		compsManager.excludeEntityIndexesWithout(actual, DynamicArray.of(F.class).cloneAndMap((Class<F> type, int i) -> type.getName()));
+		compsManager.excludeEntityIndexesWithout(actual, DynamicArray.of(F.class).mappedCopy((Class<F> type, int i) -> type.getName()));
 
 		Assertions.assertThat(actual).isEqualTo(new Bits(100));
 	}
@@ -314,7 +314,7 @@ class CompsManagerTest {
 		compsManager.attachComps(entityC, new B(), new C());
 
 		Bits actual = Bits.filled(4);
-		compsManager.excludeEntityIndexesWith(actual, DynamicArray.of(B.class).cloneAndMap((Class<B> type, int i) -> type.getName()));
+		compsManager.excludeEntityIndexesWith(actual, DynamicArray.of(B.class).mappedCopy((Class<B> type, int i) -> type.getName()));
 
 		Assertions.assertThat(actual).isEqualTo(Bits.of(4, 1,3));
 	}
@@ -337,7 +337,7 @@ class CompsManagerTest {
 		compsManager.attachComps(entityC, new B(), new C());
 
 		Bits actual = Bits.filled(3);
-		compsManager.excludeEntityIndexesWith(actual, DynamicArray.of(A.class, C.class).cloneAndMap((Class<? extends Record> type, int i) -> type.getName()));
+		compsManager.excludeEntityIndexesWith(actual, DynamicArray.of(A.class, C.class).mappedCopy((Class<? extends Record> type, int i) -> type.getName()));
 
 		Assertions.assertThat(actual).isEqualTo(new Bits(3));
 	}
@@ -360,7 +360,7 @@ class CompsManagerTest {
 		compsManager.attachComps(entityC, new B(), new C());
 
 		Bits actual = Bits.filled(100);
-		compsManager.excludeEntityIndexesWith(actual, DynamicArray.of(F.class).cloneAndMap((Class<F> type, int i) -> type.getName()));
+		compsManager.excludeEntityIndexesWith(actual, DynamicArray.of(F.class).mappedCopy((Class<F> type, int i) -> type.getName()));
 
 		Assertions.assertThat(actual).isEqualTo(Bits.filled(100));
 	}

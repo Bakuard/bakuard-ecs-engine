@@ -4,6 +4,7 @@ import com.bakuard.collections.ReadableBits;
 import com.bakuard.ecsEngine.entity.Entity;
 
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 public interface CompPool {
 
@@ -24,6 +25,8 @@ public interface CompPool {
 	public ReadableBits getEntityIndexesMask();
 
 	public <T> void merge(CompPool src, MergeStrategy<Entity, T> strategy);
+
+	public <T> CompPool copy(BiFunction<Entity, T, T> mapper);
 
 
 	public static interface EntryIterator<E> {

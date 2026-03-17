@@ -99,6 +99,11 @@ public final class TagsManager {
 		return result || (!isFirstAlive && !isSecondAlive);
 	}
 
+	public boolean existsTag(String tag) {
+		Bits tagMask = tagMasks.get(tag);
+		return tagMask != null && !tagMask.isClear();
+	}
+
 
 	public Set<String> getAllTags() {
 		return new HashSet<>(tagMasks.keySet());

@@ -38,7 +38,7 @@ public final class EntityFilter {
 
 	public EntityFilter allComps(Class<?>... compTypes) {
 		assertNotWithoutComps();
-		DynamicArray<String> allComps = DynamicArray.of(compTypes).cloneAndMap((Class<?> type, int i) -> type.getName());
+		DynamicArray<String> allComps = DynamicArray.of(compTypes).mappedCopy((Class<?> type, int i) -> type.getName());
 		return new EntityFilter(allTags, noneTags, allComps, noneComps, withoutComps, withoutTags);
 	}
 
@@ -49,7 +49,7 @@ public final class EntityFilter {
 
 	public EntityFilter noneComps(Class<?>... compTypes) {
 		assertNotWithoutComps();
-		DynamicArray<String> noneComps = DynamicArray.of(compTypes).cloneAndMap((Class<?> type, int i) -> type.getName());
+		DynamicArray<String> noneComps = DynamicArray.of(compTypes).mappedCopy((Class<?> type, int i) -> type.getName());
 		return new EntityFilter(allTags, noneTags, allComps, noneComps, withoutComps, withoutTags);
 	}
 

@@ -36,7 +36,7 @@ public final class CompsManager {
 
 	public void detachAllComps(Entity entity) {
 		entityManager.assertIsAlive(entity);
-		compPools.forEach((compName, compPool) -> compPool.detachComp(entity));
+		compPools.forEach((poolName, compPool) -> compPool.detachComp(entity));
 	}
 
 	public void replaceAllComps(Entity entity, Object... comps) {
@@ -162,16 +162,6 @@ public final class CompsManager {
 
 	public Set<String> getAllCompPoolNames() {
 		return new HashSet<>(compPools.keySet());
-	}
-
-
-	public void merge(CompsManager src, Iterable<String> mergedPools, MergeStrategy<Entity, ?> mergeStrategy) {
-		final SparseSet emptyCompPool = new SparseSet();
-		for(String poolName : mergedPools) {
-			CompPool originPool = getOrCreateCompPool(poolName);
-			CompPool srcPool = src.compPools.getOrDefault(poolName, emptyCompPool);
-			originPool.merge(srcPool, mergeStrategy);
-		}
 	}
 
 

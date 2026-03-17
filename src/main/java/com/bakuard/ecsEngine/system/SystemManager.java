@@ -42,7 +42,7 @@ public final class SystemManager {
 		System oldSystem = registeredSystems.put(systemName, system);
 		if(oldSystem != null) {
 			groups.replaceAll((key, group) ->
-				group.cloneAndMap(
+				group.mappedCopy(
 						(systemMeta, index) -> systemMeta.systemName().equals(systemName) ?
 								systemMeta.setSystem(system) :
 								systemMeta
