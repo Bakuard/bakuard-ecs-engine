@@ -1,6 +1,7 @@
 package com.bakuard.ecsEngine;
 
 import com.bakuard.collections.Bits;
+import com.bakuard.collections.ReadableBits;
 import com.bakuard.ecsEngine.component.CompPool;
 import com.bakuard.ecsEngine.component.CompsManager;
 import com.bakuard.ecsEngine.component.EntityFilter;
@@ -272,5 +273,14 @@ public final class DefaultWorld implements World {
 
 	public Set<String> getAllCompPoolNames() {
 		return compsManager.getAllCompPoolNames();
+	}
+
+
+	public ReadableBits getEntityIndexesByTag(String tag) {
+		return tagsManager.getEntityIndexesByTag(tag);
+	}
+
+	public void setEntityIndexesForTag(String tag, Bits entityIndexes) {
+		tagsManager.setEntityIndexesForTag(tag, entityIndexes);
 	}
 }

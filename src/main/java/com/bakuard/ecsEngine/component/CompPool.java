@@ -24,7 +24,7 @@ public interface CompPool {
 
 	public ReadableBits getEntityIndexesMask();
 
-	public <T> void merge(CompPool src, MergeStrategy<Entity, T> strategy);
+	public <T> void merge(CompPool src, MergeCompPoolStrategy<T> mergeStrategy);
 
 	public <T> CompPool copy(BiFunction<Entity, T, T> mapper);
 

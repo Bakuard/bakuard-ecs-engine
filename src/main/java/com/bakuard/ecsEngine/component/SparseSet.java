@@ -120,7 +120,7 @@ public final class SparseSet implements CompPool {
 	}
 
 	@Override
-	public <T> void merge(CompPool src, MergeStrategy<Entity, T> mergeStrategy) {
+	public <T> void merge(CompPool src, MergeCompPoolStrategy<T> mergeStrategy) {
 		++actualModCount;
 
 		for(int i = size - 1; i >= 0; --i) {

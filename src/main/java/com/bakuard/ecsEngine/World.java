@@ -1,6 +1,7 @@
 package com.bakuard.ecsEngine;
 
 import com.bakuard.collections.Bits;
+import com.bakuard.collections.ReadableBits;
 import com.bakuard.ecsEngine.component.CompPool;
 import com.bakuard.ecsEngine.component.EntityFilter;
 import com.bakuard.ecsEngine.entity.Entity;
@@ -128,4 +129,9 @@ public interface World {
 	public <S extends CompPool> S getCompPool(String poolName);
 
 	public Set<String> getAllCompPoolNames();
+
+
+	public ReadableBits getEntityIndexesByTag(String tag);
+
+	public void setEntityIndexesForTag(String tag, Bits entityIndexes);
 }
