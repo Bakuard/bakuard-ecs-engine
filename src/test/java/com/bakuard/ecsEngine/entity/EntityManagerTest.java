@@ -1,6 +1,8 @@
 package com.bakuard.ecsEngine.entity;
 
+import com.bakuard.collections.Bits;
 import com.bakuard.ecsEngine.exception.DeadEntityException;
+import com.bakuard.ecsEngine.exception.IllegalEntityStateException;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -219,6 +221,22 @@ class EntityManagerTest {
 	}
 
 	@DisplayName("""
+			isAlive(entity):
+			 entity with such generation has never been created
+			 => return false
+			""")
+	@Test
+	void isAlive6() {
+		EntityManager manager = new EntityManager();
+		manager.remove(manager.create());
+		Entity deadEntity = new Entity(0, 1);
+
+		boolean actual = manager.isAlive(deadEntity);
+
+		Assertions.assertThat(actual).isFalse();
+	}
+
+	@DisplayName("""
 			hasAliveEntityWith(index):
 			 index < 0
 			 => return false
@@ -313,232 +331,449 @@ class EntityManagerTest {
 	}
 
 	@DisplayName("""
-			unsafeRevive(entity):
-			 entity is alive
-			 => throw IllegalStateException
+			unsafeSet(entity, isAlive):
+			 entity.index() < 0
+			 => throw exception
 			""")
 	@Test
-	void unsafeRevive1() {
+	void unsafeSet1() {
 		EntityManager manager = new EntityManager();
-		Entity entity = manager.create();
-
-		Assertions.assertThatExceptionOfType(IllegalStateException.class)
-				.isThrownBy(() -> manager.unsafeRevive(entity));
-	}
-
-	@DisplayName("""
-			unsafeRevive(entity):
-			 entity is dead,
-			 there is alive entity with same index
-			 => throw IllegalStateException
-			""")
-	@Test
-	void unsafeRevive2() {
-		EntityManager manager = new EntityManager();
-		Entity entity = manager.create();
-		manager.remove(entity);
-		manager.create();
-
-		Assertions.assertThatExceptionOfType(IllegalStateException.class)
-				.isThrownBy(() -> manager.unsafeRevive(entity));
-	}
-
-	@DisplayName("""
-			unsafeRevive(entity):
-			 entity is dead,
-			 there is not alive entity with same index,
-			 there are not dead entities,
-			 manager.entityIndexHighWaterMark() + 1 = entity.index()
-			 => revive entity
-			""")
-	@Test
-	void unsafeRevive3() {
-		EntityManager manager = new EntityManager();
-		createEntities(manager, 1000);
-
-		Entity entity = new Entity(1000, 512);
-		manager.unsafeRevive(entity);
+		Entity entity = new Entity(-1, 0);
 
 		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThatThrownBy(() -> manager.unsafeSet(entity, true)).isInstanceOf(IllegalEntityStateException.class);
+		assertions.assertThatThrownBy(() -> manager.unsafeSet(entity, false)).isInstanceOf(IllegalEntityStateException.class);
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 entity.generation() < 0
+			 => throw exception
+			""")
+	@Test
+	void unsafeSet2() {
+		EntityManager manager = new EntityManager();
+		Entity entity = new Entity(0, -1);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThatThrownBy(() -> manager.unsafeSet(entity, true)).isInstanceOf(IllegalEntityStateException.class);
+		assertions.assertThatThrownBy(() -> manager.unsafeSet(entity, false)).isInstanceOf(IllegalEntityStateException.class);
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager contains this entity,
+			 entity is dead,
+			 isAlive == false
+			 => do nothing
+			""")
+	@Test
+	void unsafeSet3() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		for(int i = 0; i < 10; ++i) manager.remove(manager.create());
+		Entity deadEntity = new Entity(1000, 10);
+
+		manager.unsafeSet(deadEntity, false);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1001);
+		assertions.assertThat(manager.getEntityByIndex(deadEntity.index())).isEqualTo(deadEntity);
+		assertions.assertThat(manager.hasAliveEntityWith(deadEntity.index())).isFalse();
+		assertions.assertThat(manager.isAlive(deadEntity)).isFalse();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager contains this entity,
+			 entity is dead,
+			 isAlive == true
+			 => make this entity alive
+			""")
+	@Test
+	void unsafeSet4() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		for(int i = 0; i < 10; ++i) manager.remove(manager.create());
+		Entity entity = new Entity(1000, 10);
+
+		manager.unsafeSet(entity, true);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1001))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1001);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isTrue();
+		assertions.assertThat(manager.isAlive(entity)).isTrue();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager contains this entity,
+			 entity is alive,
+			 isAlive == false
+			 => make this entity dead
+			""")
+	@Test
+	void unsafeSet5() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		for(int i = 0; i < 10; ++i) manager.remove(manager.create());
+		Entity entity = manager.create();
+
+		manager.unsafeSet(entity, false);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1001);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isFalse();
+		assertions.assertThat(manager.isAlive(entity)).isFalse();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager contains this entity,
+			 entity is alive,
+			 isAlive == true
+			 => do nothing
+			""")
+	@Test
+	void unsafeSet6() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		for(int i = 0; i < 10; ++i) manager.remove(manager.create());
+		Entity aliveEntity = manager.create();
+
+		manager.unsafeSet(aliveEntity, true);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1001))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1001);
+		assertions.assertThat(manager.getEntityByIndex(aliveEntity.index())).isEqualTo(aliveEntity);
+		assertions.assertThat(manager.hasAliveEntityWith(aliveEntity.index())).isTrue();
+		assertions.assertThat(manager.isAlive(aliveEntity)).isTrue();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager contains dead entity with same index,
+			 dead entity with same index in begin of reserved dead entities list
+			 isAlive == false
+			 => replace entity in EntityManager with this entity as dead
+			""")
+	@Test
+	void unsafeSet7() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		for(int i = 512; i < 600; ++i) manager.remove(new Entity(i, 0));
+		Entity entity = new Entity(512, 512);
+
+		manager.unsafeSet(entity, false);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000).clearRange(512, 600))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1000);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isFalse();
+		assertions.assertThat(manager.isAlive(entity)).isFalse();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager contains dead entity with same index,
+			 dead entity with same index in end of reserved dead entities list
+			 isAlive == false
+			 => replace entity in EntityManager with this entity as dead
+			""")
+	@Test
+	void unsafeSet8() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		for(int i = 512; i < 600; ++i) manager.remove(new Entity(i, 0));
+		Entity entity = new Entity(599, 512);
+
+		manager.unsafeSet(entity, false);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000).clearRange(512, 600))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1000);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isFalse();
+		assertions.assertThat(manager.isAlive(entity)).isFalse();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager contains dead entity with same index,
+			 reserved dead entities list has single entity
+			 isAlive == false
+			 => replace entity in EntityManager with this entity as dead
+			""")
+	@Test
+	void unsafeSet9() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		manager.remove(new Entity(512, 0));
+		Entity entity = new Entity(512, 512);
+
+		manager.unsafeSet(entity, false);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000).clearAll(512))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1000);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isFalse();
+		assertions.assertThat(manager.isAlive(entity)).isFalse();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager contains dead entity with same index,
+			 dead entity with same index in begin of reserved dead entities list
+			 isAlive == true
+			 => replace entity in EntityManager with this entity as alive
+			""")
+	@Test
+	void unsafeSet10() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		for(int i = 512; i < 600; ++i) manager.remove(new Entity(i, 0));
+		Entity entity = new Entity(512, 512);
+
+		manager.unsafeSet(entity, true);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000).clearRange(513, 600))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1000);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isTrue();
+		assertions.assertThat(manager.isAlive(entity)).isTrue();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager contains dead entity with same index,
+			 dead entity with same index in end of reserved dead entities list
+			 isAlive == true
+			 => replace entity in EntityManager with this entity as alive
+			""")
+	@Test
+	void unsafeSet11() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		for(int i = 512; i < 600; ++i) manager.remove(new Entity(i, 0));
+		Entity entity = new Entity(599, 512);
+
+		manager.unsafeSet(entity, true);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000).clearRange(512, 599))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1000);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isTrue();
+		assertions.assertThat(manager.isAlive(entity)).isTrue();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager contains dead entity with same index,
+			 reserved dead entities list has single entity
+			 isAlive == true
+			 => replace entity in EntityManager with this entity as alive
+			""")
+	@Test
+	void unsafeSet12() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		manager.remove(new Entity(512, 0));
+		Entity entity = new Entity(512, 512);
+
+		manager.unsafeSet(entity, true);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1000);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isTrue();
+		assertions.assertThat(manager.isAlive(entity)).isTrue();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager contains alive entity with same index,
+			 isAlive == false
+			 => replace entity in EntityManager with this entity as dead
+			""")
+	@Test
+	void unsafeSet13() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		Entity entity = new Entity(217, 512);
+
+		manager.unsafeSet(entity, false);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000).clearAll(217))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1000);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isFalse();
+		assertions.assertThat(manager.isAlive(entity)).isFalse();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager contains alive entity with same index,
+			 isAlive == true
+			 => replace entity in EntityManager with this entity as alive
+			""")
+	@Test
+	void unsafeSet14() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		Entity entity = new Entity(217, 512);
+
+		manager.unsafeSet(entity, true);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1000);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isTrue();
+		assertions.assertThat(manager.isAlive(entity)).isTrue();
+		assertions.assertAll();
+	}
+
+	@DisplayName("""
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager doesn't contain entity with same index,
+			 EntityManager.countReservedIndexes() = entity.index()
+			 isAlive == true
+			 => add this entity in EntityManager as alive
+			""")
+	@Test
+	void unsafeSet15() {
+		EntityManager manager = new EntityManager();
+		for(int i = 0; i < 1000; ++i) manager.create();
+		Entity entity = new Entity(1000, 512);
+
+		manager.unsafeSet(entity, true);
+
+		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1001))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1001);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isTrue();
 		assertions.assertThat(manager.isAlive(entity)).isTrue();
 		assertions.assertThat(manager.create()).isEqualTo(new Entity(1001, 0));
 		assertions.assertAll();
 	}
 
 	@DisplayName("""
-			unsafeRevive(entity):
-			 entity is dead,
-			 there is not alive entity with same index,
-			 there are not dead entities,
-			 manager.entityIndexHighWaterMark() + 1000 = entity.index()
-			 => revive entity, dead entities from manager.entityIndexHighWaterMark() to entity.index()
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager doesn't contain entity with same index,
+			 EntityManager.countReservedIndexes() = entity.index()
+			 isAlive == false
+			 => add this entity in EntityManager as dead
 			""")
 	@Test
-	void unsafeRevive4() {
+	void unsafeSet16() {
 		EntityManager manager = new EntityManager();
-		createEntities(manager, 1000);
-
-		Entity entity = new Entity(2000, 512);
-		manager.unsafeRevive(entity);
-		List<Entity> actual = createEntities(manager, 1000);
-
-		List<Entity> expected = createEntities(0, 1000, 2000);
-		Assertions.assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
-	}
-
-	@DisplayName("""
-			unsafeRevive(entity):
-			 entity is dead,
-			 there is not alive entity with same index,
-			 there are dead entities,
-			 there is not reserved dead entity with same index,
-			 manager.entityIndexHighWaterMark() + 1 = entity.index()
-			 => revive entity, dead entities from manager.entityIndexHighWaterMark() to entity.index()
-			""")
-	@Test
-	void unsafeRevive5() {
-		EntityManager manager = new EntityManager();
-		createEntities(manager, 1000);
-		removeEntities(manager, 0, 0,100,101,512,999);
-
+		for(int i = 0; i < 1000; ++i) manager.create();
 		Entity entity = new Entity(1000, 512);
-		manager.unsafeRevive(entity);
-		List<Entity> actual = createEntities(manager, 6);
 
-		List<Entity> expected = createEntities(1, 0,100,101,512,999);
-		expected.add(new Entity(1001, 0));
-		Assertions.assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
-	}
+		manager.unsafeSet(entity, false);
 
-	@DisplayName("""
-			unsafeRevive(entity):
-			 entity is dead,
-			 there is not alive entity with same index,
-			 there are dead entities,
-			 there is not reserved dead entity with same index,
-			 manager.entityIndexHighWaterMark() + 1000 = entity.index()
-			 => revive entity, dead entities from manager.entityIndexHighWaterMark() to entity.index()
-			""")
-	@Test
-	void unsafeRevive6() {
-		EntityManager manager = new EntityManager();
-		createEntities(manager, 1000);
-		removeEntities(manager, 0, 0,100,101,512,999);
-
-		Entity entity = new Entity(2000, 512);
-		manager.unsafeRevive(entity);
-		List<Entity> actual = createEntities(manager, 2005);
-
-		List<Entity> expected = createEntities(1, 0,100,101,512,999);
-		expected.addAll(createEntities(0, 1000, 2000));
-		expected.addAll(createEntities(0, 2001, 3001));
-		Assertions.assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
-	}
-
-	@DisplayName("""
-			unsafeRevive(entity):
-			 entity is dead,
-			 there is not alive entity with same index,
-			 there are dead entities,
-			 there is reserved dead entity with same index in the begin of implicit list
-			 => revive entity
-			""")
-	@Test
-	void unsafeRevive7() {
-		EntityManager manager = new EntityManager();
-		createEntities(manager, 1000);
-		removeEntities(manager, 0, 0,100,101,512,999);
-
-		Entity entity = new Entity(0, 512);
-		manager.unsafeRevive(entity);
-		List<Entity> actual = createEntities(manager, 1004);
-
-		List<Entity> expected = createEntities(1, 100,101,512,999);
-		expected.addAll(createEntities(0, 1000, 2000));
 		SoftAssertions assertions = new SoftAssertions();
-		assertions.assertThat(manager.isAlive(entity)).isTrue();
-		assertions.assertThat(manager.getEntityByIndex(0)).isEqualTo(entity);
-		assertions.assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(1001);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isFalse();
+		assertions.assertThat(manager.isAlive(entity)).isFalse();
+		assertions.assertThat(manager.create()).isEqualTo(entity);
+		assertions.assertThat(manager.create()).isEqualTo(new Entity(1001, 0));
 		assertions.assertAll();
 	}
 
 	@DisplayName("""
-			unsafeRevive(entity):
-			 entity is dead,
-			 there is not alive entity with same index,
-			 there are dead entities,
-			 there is reserved dead entity with same index in the middle of implicit list
-			 => revive entity
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager doesn't contain entity with same index,
+			 EntityManager.countReservedIndexes() + 1000 = entity.index()
+			 isAlive == true
+			 => add this entity in EntityManager as alive,
+			    add dead entities in EntityManager with index > countReservedIndexes() and index < entity.index()
 			""")
 	@Test
-	void unsafeRevive8() {
+	void unsafeSet17() {
 		EntityManager manager = new EntityManager();
-		createEntities(manager, 1000);
-		removeEntities(manager, 0, 0,100,101,512,999);
+		for(int i = 0; i < 1000; ++i) manager.create();
+		Entity entity = new Entity(1999, 512);
 
-		Entity entity = new Entity(101, 512);
-		manager.unsafeRevive(entity);
-		List<Entity> actual = createEntities(manager, 1004);
+		manager.unsafeSet(entity, true);
 
-		List<Entity> expected = createEntities(1, 0,100,512,999);
-		expected.addAll(createEntities(0, 1000, 2000));
 		SoftAssertions assertions = new SoftAssertions();
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.of(2000).setRange(0, 1000).setAll(1999))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(2000);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isTrue();
 		assertions.assertThat(manager.isAlive(entity)).isTrue();
-		assertions.assertThat(manager.getEntityByIndex(101)).isEqualTo(entity);
-		assertions.assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
+		for(int i = 1000; i < 1999; ++i) assertions.assertThat(manager.create()).isEqualTo(new Entity(i, 0));
+		assertions.assertThat(manager.create()).isEqualTo(entity);
+		assertions.assertThat(manager.create()).isEqualTo(new Entity(2000, 0));
 		assertions.assertAll();
 	}
 
 	@DisplayName("""
-			unsafeRevive(entity):
-			 entity is dead,
-			 there is not alive entity with same index,
-			 there are dead entities,
-			 there is reserved dead entity with same index in the end of implicit list
-			 => revive entity
+			unsafeSet(entity, isAlive):
+			 EntityManager doesn't contain this entity,
+			 EntityManager doesn't contain entity with same index,
+			 EntityManager.countReservedIndexes() + 1000 = entity.index()
+			 isAlive == false
+			 => add this entity in EntityManager as dead,
+			    add dead entities in EntityManager with index > countReservedIndexes() and index < entity.index()
 			""")
 	@Test
-	void unsafeRevive9() {
+	void unsafeSet18() {
 		EntityManager manager = new EntityManager();
-		createEntities(manager, 1000);
-		removeEntities(manager, 0, 0,100,101,512,999);
+		for(int i = 0; i < 1000; ++i) manager.create();
+		Entity entity = new Entity(1999, 512);
 
-		Entity entity = new Entity(999, 512);
-		manager.unsafeRevive(entity);
-		List<Entity> actual = createEntities(manager, 1004);
+		manager.unsafeSet(entity, false);
 
-		List<Entity> expected = createEntities(1, 0,100,101,512);
-		expected.addAll(createEntities(0, 1000, 2000));
 		SoftAssertions assertions = new SoftAssertions();
-		assertions.assertThat(manager.isAlive(entity)).isTrue();
-		assertions.assertThat(manager.getEntityByIndex(999)).isEqualTo(entity);
-		assertions.assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
-		assertions.assertAll();
-	}
-
-	@DisplayName("""
-			unsafeRevive(entity):
-			 entity is dead,
-			 there is not alive entity with same index,
-			 there is only one dead entity,
-			 there is reserved dead entity with same index
-			 => revive entity
-			""")
-	@Test
-	void unsafeRevive10() {
-		EntityManager manager = new EntityManager();
-		createEntities(manager, 1000);
-		manager.remove(new Entity(101, 0));
-
-		Entity entity = new Entity(101, 512);
-		manager.unsafeRevive(entity);
-		List<Entity> actual = createEntities(manager, 1000);
-
-		List<Entity> expected = createEntities(0, 1000, 2000);
-		SoftAssertions assertions = new SoftAssertions();
-		assertions.assertThat(manager.isAlive(entity)).isTrue();
-		assertions.assertThat(manager.getEntityByIndex(101)).isEqualTo(entity);
-		assertions.assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
+		assertions.assertThat(manager.getAliveEntitiesMask().equalsIgnoreSize(Bits.filled(1000))).isTrue();
+		assertions.assertThat(manager.countReservedIndexes()).isEqualTo(2000);
+		assertions.assertThat(manager.getEntityByIndex(entity.index())).isEqualTo(entity);
+		assertions.assertThat(manager.hasAliveEntityWith(entity.index())).isFalse();
+		assertions.assertThat(manager.isAlive(entity)).isFalse();
+		for(int i = 1000; i < 1999; ++i) assertions.assertThat(manager.create()).isEqualTo(new Entity(i, 0));
+		assertions.assertThat(manager.create()).isEqualTo(entity);
+		assertions.assertThat(manager.create()).isEqualTo(new Entity(2000, 0));
 		assertions.assertAll();
 	}
 

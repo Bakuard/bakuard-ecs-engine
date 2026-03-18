@@ -6,6 +6,7 @@ import com.bakuard.ecsEngine.entity.Entity;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 public final class SparseSet implements CompPool {
 
@@ -27,6 +28,14 @@ public final class SparseSet implements CompPool {
 		entityIndexes = new Bits(128);
 
 		Arrays.fill(entityIndexToComp, -1);
+	}
+
+	private SparseSet(SparseSet other) {
+		this.entityIndexToComp = other.entityIndexToComp.clone();
+		this.comps = other.comps.clone();
+		this.entities = other.entities.clone();
+		this.size = other.size;
+		this.entityIndexes = new Bits(other.entityIndexes);
 	}
 
 	@Override
@@ -111,7 +120,7 @@ public final class SparseSet implements CompPool {
 	}
 
 	@Override
-	public <T> void merge(CompPool src, MergeStrategy<Entity, T> mergeStrategy) {
+	public <T> void merge(CompPool src, MergeCompPoolStrategy<T> mergeStrategy) {
 		++actualModCount;
 
 		for(int i = size - 1; i >= 0; --i) {
@@ -130,6 +139,15 @@ public final class SparseSet implements CompPool {
 			T result = mergeStrategy.merge(entity, null, comp);
 			if(result != null) origin.attachComp(entity, result);
 		});
+	}
+
+	@Override
+	public <T> CompPool copy(BiFunction<Entity, T, T> mapper) {
+		SparseSet result = new SparseSet(this);
+		for(int i = 0; i < size; ++i) {
+			result.comps[i] = mapper.apply(entities[i], (T) comps[i]);
+		}
+		return result;
 	}
 
 	@Override

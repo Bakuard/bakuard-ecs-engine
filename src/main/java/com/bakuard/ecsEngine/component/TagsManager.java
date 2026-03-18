@@ -1,6 +1,7 @@
 package com.bakuard.ecsEngine.component;
 
 import com.bakuard.collections.Bits;
+import com.bakuard.collections.ReadableBits;
 import com.bakuard.collections.ReadableLinearStructure;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
@@ -99,6 +100,11 @@ public final class TagsManager {
 		return result || (!isFirstAlive && !isSecondAlive);
 	}
 
+	public boolean existsTag(String tag) {
+		Bits tagMask = tagMasks.get(tag);
+		return tagMask != null && !tagMask.isClear();
+	}
+
 
 	public Set<String> getAllTags() {
 		return new HashSet<>(tagMasks.keySet());
@@ -172,53 +178,12 @@ public final class TagsManager {
 	}
 
 
-	public void mergeUniqueTags(TagsManager src, MergeStrategy<Entity, String> uniqueTagsMergeStrategy) {
-		final HashMap<String, Entity> uniqueTagToEntityResult = new HashMap<>();
-		final HashMap<Entity, String> entityToUniqueTagResult = new HashMap<>();
-
-		entityToUniqueTag.forEach((entity, originUniqueTag) -> {
-			String srcUniqueTag = src.getUniqueTagByEntity(entity);
-			String resultUniqueTag = uniqueTagsMergeStrategy.merge(entity, originUniqueTag, srcUniqueTag);
-
-			if(resultUniqueTag != null && !resultUniqueTag.equals(originUniqueTag)) {
-				entityToUniqueTagResult.put(entity, resultUniqueTag);
-				uniqueTagToEntityResult.put(resultUniqueTag, entity);
-			}
-		});
-
-		final TagsManager origin = this;
-		src.entityToUniqueTag.forEach((entity, srcUniqueTag) -> {
-			if(origin.entityToUniqueTag.containsKey(entity)) return;
-
-			String resultUniqueTag = uniqueTagsMergeStrategy.merge(entity, null, srcUniqueTag);
-			if(resultUniqueTag != null) {
-				entityToUniqueTagResult.put(entity, resultUniqueTag);
-				uniqueTagToEntityResult.put(resultUniqueTag, entity);
-			}
-		});
-
-		uniqueTagToEntity = uniqueTagToEntityResult;
-		entityToUniqueTag = entityToUniqueTagResult;
+	public ReadableBits getEntityIndexesByTag(String tag) {
+		return tagMasks.get(tag);
 	}
 
-	public void mergeTags(TagsManager src, MergeStrategy<String, Bits> tagsMergeStrategy) {
-		final HashMap<String, Bits> tagMasksResult = new HashMap<>();
-
-		tagMasks.forEach((tagName, originMask) -> {
-			Bits srcMask = src.tagMasks.get(tagName);
-			Bits resultMask = tagsMergeStrategy.merge(tagName, originMask, srcMask);
-			if(resultMask != null) tagMasksResult.put(tagName, new Bits(resultMask));
-		});
-
-		final TagsManager origin = this;
-		src.tagMasks.forEach((tagName, srcMask) -> {
-			if(origin.tagMasks.containsKey(tagName)) return;
-
-			Bits resultMask = tagsMergeStrategy.merge(tagName, null, srcMask);
-			if(resultMask != null) tagMasksResult.put(tagName, new Bits(resultMask));
-		});
-
-		tagMasks = tagMasksResult;
+	public void setEntityIndexesForTag(String tag, Bits entityIndexes) {
+		tagMasks.put(tag, new Bits(entityIndexes));
 	}
 
 

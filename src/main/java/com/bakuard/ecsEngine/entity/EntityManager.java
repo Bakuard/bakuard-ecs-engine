@@ -3,6 +3,7 @@ package com.bakuard.ecsEngine.entity;
 import com.bakuard.collections.Bits;
 import com.bakuard.collections.ReadableBits;
 import com.bakuard.ecsEngine.exception.DeadEntityException;
+import com.bakuard.ecsEngine.exception.IllegalEntityStateException;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -32,15 +33,24 @@ public final class EntityManager {
 		aliveEntitiesMask = new Bits(MIN_BITS_SIZE);
 	}
 
+	public EntityManager(EntityManager other) {
+		this.generations = other.generations.clone();
+		this.recycledIndexes = other.recycledIndexes.clone();
+		this.generationsSize = other.generationsSize;
+		this.recycledIndexesSize = other.recycledIndexesSize;
+		this.aliveEntitiesMask = new Bits(other.aliveEntitiesMask);
+	}
+
 	/**
 	 * <p>Создает и возвращает новую сущность.</p>
 	 * <p>Каждая сущность (иначе говоря, каждая комбинация {@link Entity#index()}/{@link Entity#generation()})
-	 * будет создана через данный менеджер только один раз. Эта гарантия может быть нарушена в результате вызова {@link #unsafeRevive(Entity)}.</p>
+	 * будет создана через данный менеджер только один раз. Эта гарантия может быть нарушена в результате вызова {@link #unsafeSet(Entity, boolean)}.</p>
 	 */
 	public Entity create() {
 		if(recycledIndexesSize == 0) {
 			final int index = generationsSize++;
-			growGenerationsToIndex(index);
+			growGenerationsArrayToIndex(index);
+			growAliveEntitiesMaskToIndex(index);
 			aliveEntitiesMask.set(index);
 			return new Entity(index, 0);
 		} else {
@@ -58,64 +68,67 @@ public final class EntityManager {
 
 		final int index = entity.index();
 		++generations[index];
-		growRecycledIndexesToIndex(recycledIndexesSize);
+		growRecycledIndexesArrayToIndex(recycledIndexesSize);
 		recycledIndexes[recycledIndexesSize++] = index;
 		aliveEntitiesMask.clear(index);
 	}
 
 	/**
-	 * <p>Если нет живой ({@link #isAlive(Entity)}<code> == false</code>) сущности с таким же индексом - данная сущность становится живой, включая её {@link Entity#generation()}.
-	 * Если уже есть живая сущность с таким же индексом - выбрасывает исключение.</p>
+	 * <p>Добавляет указанную сущность в данный менеджер. Если уже есть сущность с таким же индексом - перезаписывает её
+	 * {@link Entity#generation()} и состояние {@link #isAlive(Entity)} на указанные.</p>
 	 *
 	 * <p><b>Назначение данного метода</b> - облегчить тестирование в тех случаях, когда требуется точно восстановить определенное состояние мира.</p>
 	 *
 	 * <p><b>ВНИМАНИЕ!</b> Данный метод не является безопасным по следующим причинам:
 	 * <ul>
-	 *     <li>Метод работает медленно. Его сложность выполнения - O(n), где n - кол-во мертвых сущностей, зарезервированных для переиспользования.</li>
-	 *     <li>Метод может вызвать перерасход памяти, если {@link Entity#index()} возрождаемой сущности больше чем {@link #entityIndexHighWaterMark()}</li>
+	 *     <li>Сложность выполнения метода становится линейной, если в мире есть мертвая сущность с таким же индексом, или
+	 *         индекс передаваемой сущности больше чем {@link #countReservedIndexes()}.</li>
+	 *     <li>Метод может вызвать перерасход памяти, если {@link Entity#index()} возрождаемой сущности значительнно больше чем {@link #countReservedIndexes()}</li>
 	 *     <li>Метод может нарушить гарантию метода {@link #create()}. Если возродить ранее удаленную сущность ({@link #remove(Entity)}),
 	 *     то счетчик поколений ({@link Entity#generation()}) для всех сущностей с данным индексом будет сброшен до значения поколения передаваемой сущности.</li>
-	 *     <li>Метод не выполняет проверок на отрицательность {@link Entity#index()} и {@link Entity#generation()}.</li>
 	 * </ul>
 	 * <b>Используйте данный метод, только если хорошо понимаете, что делаете.</b>
 	 * </p>
 	 *
-	 * @throws IllegalStateException если уже есть живая сущность с таким же индексом ({@link #isAlive(Entity)}<code> == true</code>).
+	 * @throws IllegalEntityStateException если индекс или поколение сущности отрицательны.
 	 * @throws NullPointerException если entity равен null.
 	 */
-	public void unsafeRevive(Entity entity) {
+	public void unsafeSet(Entity entity, boolean isAlive) {
 		final int entityIndex = entity.index();
-		if(hasAliveEntityWith(entityIndex))
-			throw new IllegalStateException("There is already a living entity with index " + entityIndex);
+		if(entityIndex < 0 || entity.generation() < 0)
+			throw new IllegalEntityStateException("Entity index and generation must be non-negative: " + entity);
 
-		for(int i = 0; i < recycledIndexesSize; ++i) {
-			if(recycledIndexes[i] == entityIndex) {
-				recycledIndexes[i] = recycledIndexes[--recycledIndexesSize];
-				break;
+		final int newRecycledIndexesCount = entityIndex - generationsSize;
+		if(newRecycledIndexesCount >= 0) {
+			if(newRecycledIndexesCount > 0 || !isAlive) {
+				int lastRecycledItemIndex = recycledIndexesSize + newRecycledIndexesCount;
+				growRecycledIndexesArrayToIndex(lastRecycledItemIndex);
+				for(int i = lastRecycledItemIndex, j = generationsSize; i >= recycledIndexesSize; --i, ++j)
+					recycledIndexes[i] = j;
+				recycledIndexesSize = lastRecycledItemIndex + 1;
 			}
-		}
 
-		if(entityIndex >= generationsSize) {
-			int newRecycledIndexesCount = entityIndex - generationsSize;
-			if(newRecycledIndexesCount > 0) {
-				growRecycledIndexesToIndex(recycledIndexesSize + newRecycledIndexesCount);
-				for(int i = generationsSize, j = recycledIndexesSize; i < entityIndex; ++i, ++j)
-					recycledIndexes[j] = i;
-				recycledIndexesSize += newRecycledIndexesCount;
-			}
 			generationsSize = entityIndex + 1;
-			growGenerationsToIndex(entityIndex);
+			growGenerationsArrayToIndex(entityIndex);
+			growAliveEntitiesMaskToIndex(entityIndex);
+		} else if(isAlive && !aliveEntitiesMask.get(entityIndex)) {
+			for(int i = 0; i < recycledIndexesSize; ++i)
+				if(recycledIndexes[i] == entityIndex) {
+					recycledIndexes[i] = recycledIndexes[--recycledIndexesSize];
+					break;
+				}
 		}
 
 		generations[entityIndex] = entity.generation();
-		aliveEntitiesMask.set(entityIndex);
+		if(isAlive) aliveEntitiesMask.set(entityIndex);
+		else aliveEntitiesMask.clear(entityIndex);
 	}
 
 	/**
-	 * <p>Сущность считается живой после её создания через {@link #create()} или {@link #unsafeRevive(Entity)} и до её удаления через {@link #remove(Entity)}.</p>
+	 * <p>Сущность считается живой после её создания через {@link #create()} или {@link #unsafeSet(Entity, boolean)} и до её удаления через {@link #remove(Entity)}.</p>
 	 * <p>
 	 *     <b>Метод гарантирует</b>, что среди всех сущностей с одним и тем же индексом, живой может считаться не более одной сущности.
-	 *     При этом, все сущности с таким же индексом, для которых был вызван {@link #remove(Entity)} и не вызывался в дальнейшем {@link #unsafeRevive(Entity)},
+	 *     При этом, все сущности с таким же индексом, для которых был вызван {@link #remove(Entity)} и не вызывался в дальнейшем {@link #unsafeSet(Entity, boolean)},
 	 *     будут считаться мертвыми.
 	 * </p>
 	 * <p>Особый случай: если entity равен null - метод вернет false.</p>
@@ -159,7 +172,7 @@ public final class EntityManager {
 	/**
 	 * <p>Возвращает кол-во всех зарезервированных индексов сущностей внутри данного менеджера сущностей.</p>
 	 * <p>
-	 *     Уточнения к поведению метода:
+	 *     <b>ВАЖНО!</b>
 	 *     <ol>
 	 *         <li>Если ни одной сущности не было создано - возвращает 0.</li>
 	 *         <li>При удалении сущностей - возвращаемое значение не уменьшается.</li>
@@ -167,7 +180,7 @@ public final class EntityManager {
 	 *     </ol>
 	 * </p>
 	 */
-	public int entityIndexHighWaterMark() {
+	public int countReservedIndexes() {
 		return generationsSize;
 	}
 
@@ -177,18 +190,6 @@ public final class EntityManager {
 	 */
 	public ReadableBits getAliveEntitiesMask() {
 		return aliveEntitiesMask;
-	}
-
-	/**
-	 * <p>Полностью копирует состояние переданного менеджера сущностей.</p>
-	 */
-	public EntityManager copyFullStateFrom(EntityManager src) {
-		this.generations = src.generations.clone();
-		this.recycledIndexes = src.recycledIndexes.clone();
-		this.generationsSize = src.generationsSize;
-		this.recycledIndexesSize = src.recycledIndexesSize;
-		this.aliveEntitiesMask.copyFullStateFrom(src.aliveEntitiesMask);
-		return this;
 	}
 
 	@Override
@@ -233,13 +234,16 @@ public final class EntityManager {
 	}
 
 
-	private void growGenerationsToIndex(int index) {
+	private void growGenerationsArrayToIndex(int index) {
 		if(index >= generations.length)
 			generations = Arrays.copyOf(generations, calculateArrayCapacity(index + 1));
+	}
+
+	private void growAliveEntitiesMaskToIndex(int index) {
 		aliveEntitiesMask.growToIndex(calculateBitsCapacity(index));
 	}
 
-	private void growRecycledIndexesToIndex(int index) {
+	private void growRecycledIndexesArrayToIndex(int index) {
 		if(index >= recycledIndexes.length)
 			recycledIndexes = Arrays.copyOf(recycledIndexes, calculateArrayCapacity(index + 1));
 	}

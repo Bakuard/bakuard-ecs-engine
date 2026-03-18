@@ -18,7 +18,7 @@
 		<dependency>
 			<groupId>com.bakuard</groupId>
 			<artifactId>collections</artifactId>
-			<version>0.3.2</version>
+			<version>0.4.0</version>
 		</dependency>
 
 		<dependency>

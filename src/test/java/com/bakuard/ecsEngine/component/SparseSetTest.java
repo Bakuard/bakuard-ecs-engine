@@ -473,7 +473,7 @@ class SparseSetTest {
 	public void merge1() {
 		SparseSet dest = new SparseSet();
 		SparseSet src = new SparseSet();
-		MergeStrategy<Entity, Integer> strategy = Mockito.mock(MergeStrategy.class);
+		MergeCompPoolStrategy<Integer> strategy = Mockito.mock(MergeCompPoolStrategy.class);
 
 		dest.merge(src, strategy);
 
@@ -492,7 +492,7 @@ class SparseSetTest {
 		SparseSet dest = new SparseSet();
 		SparseSet src = new SparseSet();
 		for(int i = 0; i < 10; ++i) src.attachComp(new Entity(i, 0), i);
-		MergeStrategy<Entity, Integer> strategy = Mockito.mock(MergeStrategy.class);
+		MergeCompPoolStrategy<Integer> strategy = Mockito.mock(MergeCompPoolStrategy.class);
 
 		dest.merge(src, strategy);
 
@@ -511,7 +511,7 @@ class SparseSetTest {
 		SparseSet dest = new SparseSet();
 		SparseSet src = new SparseSet();
 		for(int i = 0; i < 10; ++i) dest.attachComp(new Entity(i, 0), i);
-		MergeStrategy<Entity, Integer> strategy = Mockito.mock(MergeStrategy.class);
+		MergeCompPoolStrategy<Integer> strategy = Mockito.mock(MergeCompPoolStrategy.class);
 
 		dest.merge(src, strategy);
 
@@ -531,7 +531,7 @@ class SparseSetTest {
 		SparseSet src = new SparseSet();
 		for(int i = 0; i < 10; ++i) dest.attachComp(new Entity(i, 0), i);
 		for(int i = 5; i < 15; ++i) src.attachComp(new Entity(i, 0), i);
-		MergeStrategy<Entity, Integer> strategy = Mockito.mock(MergeStrategy.class);
+		MergeCompPoolStrategy<Integer> strategy = Mockito.mock(MergeCompPoolStrategy.class);
 		Mockito.when(strategy.merge(Mockito.any(Entity.class), Mockito.any(Integer.class), Mockito.any(Integer.class))).thenReturn(1000);
 
 		dest.merge(src, strategy);
@@ -552,7 +552,7 @@ class SparseSetTest {
 		SparseSet dest = new SparseSet();
 		SparseSet src = new SparseSet();
 		for(int i = 0; i < 10; ++i) dest.attachComp(new Entity(i, 0), i);
-		MergeStrategy<Entity, Integer> strategy = (entity, currentComp, srcComp) -> currentComp < 5 ? currentComp : null;
+		MergeCompPoolStrategy<Integer> strategy = (entity, currentComp, srcComp) -> currentComp < 5 ? currentComp : null;
 
 		dest.merge(src, strategy);
 
@@ -579,7 +579,7 @@ class SparseSetTest {
 		SparseSet dest = new SparseSet();
 		SparseSet src = new SparseSet();
 		for(int i = 0; i < 10; ++i) dest.attachComp(new Entity(i, 0), i);
-		MergeStrategy<Entity, Integer> strategy = (entity, currentComp, srcComp) -> currentComp * 2;
+		MergeCompPoolStrategy<Integer> strategy = (entity, currentComp, srcComp) -> currentComp * 2;
 
 		dest.merge(src, strategy);
 
@@ -611,7 +611,7 @@ class SparseSetTest {
 		SparseSet dest = new SparseSet();
 		SparseSet src = new SparseSet();
 		for(int i = 0; i < 10; ++i) src.attachComp(new Entity(i, 0), i);
-		MergeStrategy<Entity, Integer> strategy = (entity, currentComp, srcComp) -> srcComp < 5 ? srcComp : null;
+		MergeCompPoolStrategy<Integer> strategy = (entity, currentComp, srcComp) -> srcComp < 5 ? srcComp : null;
 
 		dest.merge(src, strategy);
 
@@ -638,7 +638,7 @@ class SparseSetTest {
 		SparseSet dest = new SparseSet();
 		SparseSet src = new SparseSet();
 		for(int i = 0; i < 10; ++i) src.attachComp(new Entity(i, 0), i);
-		MergeStrategy<Entity, Integer> strategy = (entity, currentComp, srcComp) -> srcComp * 2;
+		MergeCompPoolStrategy<Integer> strategy = (entity, currentComp, srcComp) -> srcComp * 2;
 
 		dest.merge(src, strategy);
 
