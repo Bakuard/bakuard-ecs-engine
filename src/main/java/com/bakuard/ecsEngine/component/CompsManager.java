@@ -95,7 +95,7 @@ public final class CompsManager {
 
 
 	public <T> T getComp(Entity entity, String poolName) {
-		entityManager.assertIsAlive(entity);
+		if(!entityManager.isAlive(entity)) return null;
 		CompPool pool = compPools.get(poolName);
 		return pool != null ? pool.getComp(entity) : null;
 	}
@@ -143,21 +143,17 @@ public final class CompsManager {
 	}
 
 
-	public void registerCompPool(CompPool pool) {
-		registerCompPool(pool, pool.getClass().getName());
-	}
-
-	public <T, S extends CompPool> S getCompPool(Class<T> poolType) {
-		return getCompPool(poolType.getName());
-	}
-
-
 	public void registerCompPool(CompPool pool, String poolName) {
 		compPools.put(poolName, pool);
 	}
 
 	public <S extends CompPool> S getCompPool(String poolName) {
 		return (S) compPools.get(poolName);
+	}
+
+	public boolean isCompPoolPopulated(String poolName) {
+		CompPool pool = compPools.get(poolName);
+		return pool != null && !pool.isEmpty();
 	}
 
 	public Set<String> getAllCompPoolNames() {

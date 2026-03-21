@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine.exception;
 
-public class UnregisteredSystemException extends RuntimeException {
+public class UnregisteredSystemException extends EcsEngineException {
 
 	public UnregisteredSystemException() {}
 

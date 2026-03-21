@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Comparator;
 
-class DefaultWorldTest {
+class WorldTest {
 
 	private static final Comparator<Bits> BITS_COMPARATOR = (maskA, maskB) -> maskA.equalsIgnoreSize(maskB) ? 0 : -1;
 
@@ -34,7 +34,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes1() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		EntityFilter filter = new EntityFilter();
 
 		Bits selection = world.selectEntityIndexes(filter);
@@ -55,7 +55,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes2() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -95,7 +95,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes3() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -135,7 +135,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes4() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -175,7 +175,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes5() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -215,7 +215,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes6() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -255,7 +255,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes7() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -295,7 +295,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes8() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -336,7 +336,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes9() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -376,7 +376,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes10() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -416,7 +416,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes11() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -456,7 +456,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes12() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -497,7 +497,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes13() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -538,7 +538,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes14() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();
@@ -579,7 +579,7 @@ class DefaultWorldTest {
 			""")
 	@Test
 	public void selectEntityIndexes15() {
-		DefaultWorld world = new DefaultWorld();
+		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
 		Entity emptyEntity3 = world.create();

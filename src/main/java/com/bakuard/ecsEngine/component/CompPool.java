@@ -18,6 +18,8 @@ public interface CompPool {
 
 	public int size();
 
+	public boolean isEmpty();
+
 	public <T> void forEach(BiConsumer<Entity, T> consumer);
 
 	public <T> EntryIterator<T> iterator();

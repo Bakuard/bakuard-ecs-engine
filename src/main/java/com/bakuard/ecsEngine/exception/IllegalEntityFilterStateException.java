@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine.exception;
 
-public class IllegalEntityFilterStateException extends RuntimeException {
+public class IllegalEntityFilterStateException extends EcsEngineException {
 	public IllegalEntityFilterStateException(String message) {
 		super(message);
 	}

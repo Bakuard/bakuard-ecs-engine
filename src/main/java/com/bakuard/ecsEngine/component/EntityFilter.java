@@ -37,45 +37,45 @@ public final class EntityFilter {
 	}
 
 	public EntityFilter allComps(Class<?>... compTypes) {
-		assertNotWithoutComps();
+		assertNotWithoutComps(compTypes);
 		DynamicArray<String> allComps = DynamicArray.of(compTypes).mappedCopy((Class<?> type, int i) -> type.getName());
 		return new EntityFilter(allTags, noneTags, allComps, noneComps, withoutComps, withoutTags);
 	}
 
 	public EntityFilter allComps(String... poolNames) {
-		assertNotWithoutComps();
+		assertNotWithoutComps(poolNames);
 		return new EntityFilter(allTags, noneTags, DynamicArray.of(poolNames), noneComps, withoutComps, withoutTags);
 	}
 
 	public EntityFilter noneComps(Class<?>... compTypes) {
-		assertNotWithoutComps();
+		assertNotWithoutComps(compTypes);
 		DynamicArray<String> noneComps = DynamicArray.of(compTypes).mappedCopy((Class<?> type, int i) -> type.getName());
 		return new EntityFilter(allTags, noneTags, allComps, noneComps, withoutComps, withoutTags);
 	}
 
 	public EntityFilter noneComps(String... poolNames) {
-		assertNotWithoutComps();
+		assertNotWithoutComps(poolNames);
 		return new EntityFilter(allTags, noneTags, allComps, DynamicArray.of(poolNames), withoutComps, withoutTags);
 	}
 
 	public EntityFilter allTags(String... tags) {
-		assertNotWithoutTags();
+		assertNotWithoutTags(tags);
 		return new EntityFilter(DynamicArray.of(tags), noneTags, allComps, noneComps, withoutComps, withoutTags);
 	}
 
 	public EntityFilter noneTags(String... tags) {
-		assertNotWithoutTags();
+		assertNotWithoutTags(tags);
 		return new EntityFilter(allTags, DynamicArray.of(tags), allComps, noneComps, withoutComps, withoutTags);
 	}
 
 	public EntityFilter withoutComps(boolean withoutComps) {
-		if(!allComps.isEmpty() || !noneComps.isEmpty())
+		if(withoutComps && (!allComps.isEmpty() || !noneComps.isEmpty()))
 			throw new IllegalEntityFilterStateException("Cannot set withoutComps to true if there are any components restrictions.");
 		return new EntityFilter(allTags, noneTags, allComps, noneComps, withoutComps, withoutTags);
 	}
 
 	public EntityFilter withoutTags(boolean withoutTags) {
-		if(!allTags.isEmpty() || !noneTags.isEmpty())
+		if(withoutTags && (!allTags.isEmpty() || !noneTags.isEmpty()))
 			throw new IllegalEntityFilterStateException("Cannot set withoutTags to true if there are any tags restrictions.");
 		return new EntityFilter(allTags, noneTags, allComps, noneComps, withoutComps, withoutTags);
 	}
@@ -143,13 +143,18 @@ public final class EntityFilter {
 	}
 
 
-	private void assertNotWithoutComps() {
-		if(withoutComps)
+	private void assertNotWithoutComps(Class<?>... compTypes) {
+		if(withoutComps && Objects.requireNonNull(compTypes).length > 0)
 			throw new IllegalEntityFilterStateException("Cannot set components restriction if withoutComps is true.");
 	}
 
-	private void assertNotWithoutTags() {
-		if(withoutTags)
+	private void assertNotWithoutComps(String[] poolNames) {
+		if(withoutComps && Objects.requireNonNull(poolNames).length > 0)
+			throw new IllegalEntityFilterStateException("Cannot set components restriction if withoutComps is true.");
+	}
+
+	private void assertNotWithoutTags(String[] tags) {
+		if(withoutTags && Objects.requireNonNull(tags).length > 0)
 			throw new IllegalEntityFilterStateException("Cannot set tags restriction if withoutTags is true.");
 	}
 }

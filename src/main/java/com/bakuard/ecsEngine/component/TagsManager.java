@@ -15,9 +15,9 @@ import java.util.Set;
 public final class TagsManager {
 
 	private final EntityManager entityManager;
-	private HashMap<String, Bits> tagMasks;
-	private HashMap<String, Entity> uniqueTagToEntity;
-	private HashMap<Entity, String> entityToUniqueTag;
+	private final HashMap<String, Bits> tagMasks;
+	private final HashMap<String, Entity> uniqueTagToEntity;
+	private final HashMap<Entity, String> entityToUniqueTag;
 
 	public TagsManager(EntityManager entityManager) {
 		this.entityManager = entityManager;
@@ -100,7 +100,7 @@ public final class TagsManager {
 		return result || (!isFirstAlive && !isSecondAlive);
 	}
 
-	public boolean existsTag(String tag) {
+	public boolean isTagAttachedToAnyEntity(String tag) {
 		Bits tagMask = tagMasks.get(tag);
 		return tagMask != null && !tagMask.isClear();
 	}
@@ -173,16 +173,16 @@ public final class TagsManager {
 		return entityManager.isAlive(entity) && entity.equals(uniqueTagToEntity.get(uniqueTag));
 	}
 
-	public boolean existsUniqueTag(String uniqueTag) {
+	public boolean isUniqueTagClaimed(String uniqueTag) {
 		return uniqueTagToEntity.containsKey(uniqueTag);
 	}
 
 
-	public ReadableBits getEntityIndexesByTag(String tag) {
+	public ReadableBits getEntityIndexesMaskByTag(String tag) {
 		return tagMasks.get(tag);
 	}
 
-	public void setEntityIndexesForTag(String tag, Bits entityIndexes) {
+	public void setEntityIndexesMaskForTag(String tag, ReadableBits entityIndexes) {
 		tagMasks.put(tag, new Bits(entityIndexes));
 	}
 

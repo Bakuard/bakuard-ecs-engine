@@ -103,6 +103,11 @@ public final class SparseSet implements CompPool {
 	}
 
 	@Override
+	public boolean isEmpty() {
+		return size > 0;
+	}
+
+	@Override
 	public <T> void forEach(BiConsumer<Entity, T> consumer) {
 		for(int i = size - 1; i >= 0; --i) {
 			consumer.accept(entities[i], (T) comps[i]);
