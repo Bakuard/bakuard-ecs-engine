@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine.exception;
 
-public class DeadEntityException extends RuntimeException {
+public class DeadEntityException extends EcsEngineException {
 	public DeadEntityException(String message) {
 		super(message);
 	}

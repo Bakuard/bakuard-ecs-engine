@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine.exception;
 
-public class UnknownEventConsumerException extends RuntimeException {
+public class UnknownEventConsumerException extends EcsEngineException {
 
 	public UnknownEventConsumerException() {}
 
