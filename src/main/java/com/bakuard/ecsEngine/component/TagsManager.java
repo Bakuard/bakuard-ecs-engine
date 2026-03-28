@@ -115,29 +115,29 @@ public final class TagsManager {
 	}
 
 
-	public void excludeEntityIndexesWithout(Bits entityIndexes, ReadableLinearStructure<String> tagNames) {
+	public void maskAnd(Bits entityIndexesMask, ReadableLinearStructure<String> tagNames) {
 		for(int i = 0; i < tagNames.size(); ++i) {
 			String tagName = tagNames.get(i);
 			Bits mask = tagMasks.get(tagName);
 			if(mask != null) {
-				entityIndexes.and(mask);
+				entityIndexesMask.and(mask);
 			} else {
-				entityIndexes.clearAll();
+				entityIndexesMask.clearAll();
 				break;
 			}
 		}
 	}
 
-	public void excludeEntityIndexesWith(Bits entityIndexes, ReadableLinearStructure<String> tagNames) {
+	public void maskAndNot(Bits entityIndexesMask, ReadableLinearStructure<String> tagNames) {
 		for(int i = 0; i < tagNames.size(); ++i) {
 			String tagName = tagNames.get(i);
 			Bits mask = tagMasks.get(tagName);
-			if(mask != null) entityIndexes.andNot(mask);
+			if(mask != null) entityIndexesMask.andNot(mask);
 		}
 	}
 
-	public void excludeEntityIndexesWithAny(Bits entityIndexes) {
-		tagMasks.forEach((tagName, mask) -> entityIndexes.andNot(mask));
+	public void maskAndNotAll(Bits entityIndexesMask) {
+		tagMasks.forEach((tagName, mask) -> entityIndexesMask.andNot(mask));
 	}
 
 
