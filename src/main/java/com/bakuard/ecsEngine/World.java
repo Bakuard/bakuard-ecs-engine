@@ -232,23 +232,23 @@ public final class World {
 
 
 	public Bits selectEntityIndexes(EntityFilter entityFilter) {
-		Bits entityIndexes = new Bits(entityManager.getAliveEntitiesMask());
+		Bits entityIndexesMask = new Bits(entityManager.getAliveEntitiesMask());
 
 		if(entityFilter.isWithoutComps()) {
-			compsManager.excludeEntityIndexesWithAny(entityIndexes);
+			compsManager.maskAndNotAll(entityIndexesMask);
 		} else {
-			compsManager.excludeEntityIndexesWithout(entityIndexes, entityFilter.getAllComps());
-			compsManager.excludeEntityIndexesWith(entityIndexes, entityFilter.getNoneComps());
+			compsManager.maskAnd(entityIndexesMask, entityFilter.getAllComps());
+			compsManager.maskAndNot(entityIndexesMask, entityFilter.getNoneComps());
 		}
 
 		if(entityFilter.isWithoutTags()) {
-			tagsManager.excludeEntityIndexesWithAny(entityIndexes);
+			tagsManager.maskAndNotAll(entityIndexesMask);
 		} else {
-			tagsManager.excludeEntityIndexesWithout(entityIndexes, entityFilter.getAllTags());
-			tagsManager.excludeEntityIndexesWith(entityIndexes, entityFilter.getNoneTags());
+			tagsManager.maskAnd(entityIndexesMask, entityFilter.getAllTags());
+			tagsManager.maskAndNot(entityIndexesMask, entityFilter.getNoneTags());
 		}
 
-		return entityIndexes;
+		return entityIndexesMask;
 	}
 
 

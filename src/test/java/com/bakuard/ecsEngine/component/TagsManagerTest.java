@@ -380,7 +380,7 @@ class TagsManagerTest {
 			 => remove correct entity indexes from entityIndexes
 			""")
 	@Test
-	public void excludeEntityIndexesWithout1() {
+	public void maskAnd1() {
 		EntityManager entityManager = new EntityManager();
 		TagsManager tagsManager = new TagsManager(entityManager);
 		Entity entityA = entityManager.create();
@@ -392,7 +392,7 @@ class TagsManagerTest {
 		tagsManager.attachTags(entityC, "B", "C");
 
 		Bits actual = Bits.filled(100);
-		tagsManager.excludeEntityIndexesWithout(actual, DynamicArray.of("B"));
+		tagsManager.maskAnd(actual, DynamicArray.of("B"));
 
 		Assertions.assertThat(actual).isEqualTo(Bits.of(100, 0, 2));
 	}
@@ -404,7 +404,7 @@ class TagsManagerTest {
 			 => clear entityIndexes
 			""")
 	@Test
-	public void excludeEntityIndexesWithout2() {
+	public void maskAnd2() {
 		EntityManager entityManager = new EntityManager();
 		TagsManager tagsManager = new TagsManager(entityManager);
 		Entity entityA = entityManager.create();
@@ -418,7 +418,7 @@ class TagsManagerTest {
 
 		tagsManager.detachTag(entityD, "D");
 		Bits actual = Bits.filled(100);
-		tagsManager.excludeEntityIndexesWithout(actual, DynamicArray.of("D"));
+		tagsManager.maskAnd(actual, DynamicArray.of("D"));
 
 		Assertions.assertThat(actual).isEqualTo(new Bits(100));
 	}
@@ -430,7 +430,7 @@ class TagsManagerTest {
 			 => clear entityIndexes
 			""")
 	@Test
-	public void excludeEntityIndexesWithout3() {
+	public void maskAnd3() {
 		EntityManager entityManager = new EntityManager();
 		TagsManager tagsManager = new TagsManager(entityManager);
 		Entity entityA = entityManager.create();
@@ -442,7 +442,7 @@ class TagsManagerTest {
 		tagsManager.attachTags(entityC, "B", "C");
 
 		Bits actual = Bits.filled(100);
-		tagsManager.excludeEntityIndexesWithout(actual, DynamicArray.of("Z"));
+		tagsManager.maskAnd(actual, DynamicArray.of("Z"));
 
 		Assertions.assertThat(actual).isEqualTo(new Bits(100));
 	}
@@ -454,7 +454,7 @@ class TagsManagerTest {
 			 => remove correct entity index from entityIndexes
 			""")
 	@Test
-	public void excludeEntityIndexesWith1() {
+	public void maskAndNot1() {
 		EntityManager entityManager = new EntityManager();
 		TagsManager tagsManager = new TagsManager(entityManager);
 		Entity entityA = entityManager.create();
@@ -466,7 +466,7 @@ class TagsManagerTest {
 		tagsManager.attachTags(entityC, "B", "C");
 
 		Bits actual = Bits.filled(4);
-		tagsManager.excludeEntityIndexesWith(actual, DynamicArray.of("B"));
+		tagsManager.maskAndNot(actual, DynamicArray.of("B"));
 
 		Assertions.assertThat(actual).isEqualTo(Bits.of(4, 1,3));
 	}
@@ -478,7 +478,7 @@ class TagsManagerTest {
 			 => clear entityIndexes
 			""")
 	@Test
-	public void excludeEntityIndexesWith2() {
+	public void maskAndNot2() {
 		EntityManager entityManager = new EntityManager();
 		TagsManager tagsManager = new TagsManager(entityManager);
 		Entity entityA = entityManager.create();
@@ -489,7 +489,7 @@ class TagsManagerTest {
 		tagsManager.attachTags(entityC, "B", "C");
 
 		Bits actual = Bits.filled(3);
-		tagsManager.excludeEntityIndexesWith(actual, DynamicArray.of("A", "C"));
+		tagsManager.maskAndNot(actual, DynamicArray.of("A", "C"));
 
 		Assertions.assertThat(actual).isEqualTo(new Bits(3));
 	}
@@ -500,7 +500,7 @@ class TagsManagerTest {
 			 => doesn't change entityIndexes
 			""")
 	@Test
-	public void excludeEntityIndexesWith3() {
+	public void maskAndNot3() {
 		EntityManager entityManager = new EntityManager();
 		TagsManager tagsManager = new TagsManager(entityManager);
 		Entity entityA = entityManager.create();
@@ -512,7 +512,7 @@ class TagsManagerTest {
 		tagsManager.attachTags(entityC, "B", "C");
 
 		Bits actual = Bits.filled(100);
-		tagsManager.excludeEntityIndexesWith(actual, DynamicArray.of("Z"));
+		tagsManager.maskAndNot(actual, DynamicArray.of("Z"));
 
 		Assertions.assertThat(actual).isEqualTo(Bits.filled(100));
 	}

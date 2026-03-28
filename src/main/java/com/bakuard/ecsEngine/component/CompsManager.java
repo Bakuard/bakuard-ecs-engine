@@ -119,27 +119,27 @@ public final class CompsManager {
 	}
 
 
-	public void excludeEntityIndexesWithout(Bits entityIndexes, ReadableLinearStructure<String> poolNames) {
+	public void maskAnd(Bits entityIndexesMask, ReadableLinearStructure<String> poolNames) {
 		for(int i = 0; i < poolNames.size(); ++i) {
 			CompPool pool = compPools.get(poolNames.get(i));
 			if(pool != null) {
-				entityIndexes.and(pool.getEntityIndexesMask());
+				entityIndexesMask.and(pool.getEntityIndexesMask());
 			} else {
-				entityIndexes.clearAll();
+				entityIndexesMask.clearAll();
 				break;
 			}
 		}
 	}
 
-	public void excludeEntityIndexesWith(Bits entityIndexes, ReadableLinearStructure<String> poolNames) {
+	public void maskAndNot(Bits entityIndexesMask, ReadableLinearStructure<String> poolNames) {
 		for(int i = 0; i < poolNames.size(); ++i) {
 			CompPool pool = compPools.get(poolNames.get(i));
-			if(pool != null) entityIndexes.andNot(pool.getEntityIndexesMask());
+			if(pool != null) entityIndexesMask.andNot(pool.getEntityIndexesMask());
 		}
 	}
 
-	public void excludeEntityIndexesWithAny(Bits entityIndexes) {
-		compPools.forEach((poolName, pool) -> entityIndexes.andNot(pool.getEntityIndexesMask()));
+	public void maskAndNotAll(Bits entityIndexesMask) {
+		compPools.forEach((poolName, pool) -> entityIndexesMask.andNot(pool.getEntityIndexesMask()));
 	}
 
 
