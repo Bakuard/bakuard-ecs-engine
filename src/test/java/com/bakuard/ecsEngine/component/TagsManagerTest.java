@@ -5,7 +5,6 @@ import com.bakuard.collections.DynamicArray;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
 import com.bakuard.ecsEngine.exception.DeadEntityException;
-import com.bakuard.ecsEngine.exception.DuplicateUniqueTagException;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
@@ -515,119 +514,5 @@ class TagsManagerTest {
 		tagsManager.maskAndNot(actual, DynamicArray.of("Z"));
 
 		Assertions.assertThat(actual).isEqualTo(Bits.filled(100));
-	}
-
-	@DisplayName("""
-			attachUniqueTag(entity, uniqueTag):
-			 entity is alive,
-			 there is no entity with this unique tag
-			 => getUniqueTagByEntity(entity) return this uniqueTag,
-			    getEntityByUniqueTag(uniqueTag) return this entity by this uniqueTag
-			""")
-	@Test
-	public void attachUniqueTag1() {
-		EntityManager entityManager = new EntityManager();
-		TagsManager tagsManager = new TagsManager(entityManager);
-		Entity entityA = entityManager.create();
-
-		tagsManager.attachUniqueTag(entityA, "A");
-
-		SoftAssertions assertions = new SoftAssertions();
-		assertions.assertThat(tagsManager.getUniqueTagByEntity(entityA)).isEqualTo("A");
-		assertions.assertThat(tagsManager.getEntityByUniqueTag("A")).isEqualTo(entityA);
-		assertions.assertAll();
-	}
-
-	@DisplayName("""
-			attachUniqueTag(entity, uniqueTag):
-			 entity is not alive,
-			 there is no entity with this unique tag
-			 => throw exception,
-			    getUniqueTagByEntity(entity) return null,
-			    getEntityByUniqueTag(uniqueTag) return null,
-			    hasUniqueTag(entity, uniqueTag) return false
-			""")
-	@Test
-	public void attachUniqueTag2() {
-		EntityManager entityManager = new EntityManager();
-		TagsManager tagsManager = new TagsManager(entityManager);
-		Entity deadEntity = entityManager.create();
-		entityManager.remove(deadEntity);
-
-		SoftAssertions assertions = new SoftAssertions();
-		assertions.assertThatThrownBy(() -> tagsManager.attachUniqueTag(deadEntity, "A")).isInstanceOf(DeadEntityException.class);
-		assertions.assertThat(tagsManager.getUniqueTagByEntity(deadEntity)).isNull();
-		assertions.assertThat(tagsManager.getEntityByUniqueTag("A")).isNull();
-		assertions.assertThat(tagsManager.hasUniqueTag(deadEntity, "A")).isFalse();
-		assertions.assertAll();
-	}
-
-	@DisplayName("""
-			attachUniqueTag(entity, uniqueTag):
-			 entity is not alive,
-			 there is entity with this unique tag
-			 => throw exception,
-			    getUniqueTagByEntity(entity) return null,
-			    getEntityByUniqueTag(uniqueTag) return alive entity by this uniqueTag,
-			    hasUniqueTag(entity, uniqueTag) return false
-			""")
-	@Test
-	public void attachUniqueTag3() {
-		EntityManager entityManager = new EntityManager();
-		TagsManager tagsManager = new TagsManager(entityManager);
-		Entity deadEntity = entityManager.create();
-		Entity aliveEntity = entityManager.create();
-		entityManager.remove(deadEntity);
-
-		tagsManager.attachUniqueTag(aliveEntity, "A");
-
-		SoftAssertions assertions = new SoftAssertions();
-		assertions.assertThatThrownBy(() -> tagsManager.attachUniqueTag(deadEntity, "A")).isInstanceOf(DeadEntityException.class);
-		assertions.assertThat(tagsManager.getUniqueTagByEntity(deadEntity)).isNull();
-		assertions.assertThat(tagsManager.getEntityByUniqueTag("A")).isEqualTo(aliveEntity);
-		assertions.assertThat(tagsManager.hasUniqueTag(deadEntity, "A")).isFalse();
-		assertions.assertAll();
-	}
-
-	@DisplayName("""
-			attachUniqueTag(entity, uniqueTag):
-			 entity is alive,
-			 there is entity with this unique tag
-			 => throw exception
-			""")
-	@Test
-	public void attachUniqueTag4() {
-		EntityManager entityManager = new EntityManager();
-		TagsManager tagsManager = new TagsManager(entityManager);
-		Entity entityA = entityManager.create();
-		Entity entityB = entityManager.create();
-
-		tagsManager.attachUniqueTag(entityB, "A");
-
-		Assertions.assertThatThrownBy(() -> tagsManager.attachUniqueTag(entityA, "A")).isInstanceOf(DuplicateUniqueTagException.class);
-	}
-
-	@DisplayName("""
-			attachUniqueTag(entity, uniqueTag):
-			 entity is alive,
-			 this entity has already had another uniqueTag
-			 => getUniqueTagByEntity(entity) return new assigned uniqueTag,
-				getEntityByUniqueTag(uniqueTag) return null by old uniqueTag,
-				getEntityByUniqueTag(uniqueTag) return this entity by new uniqueTag
-			""")
-	@Test
-	public void attachUniqueTag5() {
-		EntityManager entityManager = new EntityManager();
-		TagsManager tagsManager = new TagsManager(entityManager);
-		Entity entityA = entityManager.create();
-
-		tagsManager.attachUniqueTag(entityA, "A");
-		tagsManager.attachUniqueTag(entityA, "B");
-
-		SoftAssertions assertions = new SoftAssertions();
-		assertions.assertThat(tagsManager.getUniqueTagByEntity(entityA)).isEqualTo("B");
-		assertions.assertThat(tagsManager.getEntityByUniqueTag("A")).isNull();
-		assertions.assertThat(tagsManager.getEntityByUniqueTag("B")).isEqualTo(entityA);
-		assertions.assertAll();
 	}
 }

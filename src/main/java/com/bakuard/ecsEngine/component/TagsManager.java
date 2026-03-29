@@ -5,7 +5,6 @@ import com.bakuard.collections.ReadableBits;
 import com.bakuard.collections.ReadableLinearStructure;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
-import com.bakuard.ecsEngine.exception.DuplicateUniqueTagException;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,14 +15,10 @@ public final class TagsManager {
 
 	private final EntityManager entityManager;
 	private final HashMap<String, Bits> tagMasks;
-	private final HashMap<String, Entity> uniqueTagToEntity;
-	private final HashMap<Entity, String> entityToUniqueTag;
 
 	public TagsManager(EntityManager entityManager) {
 		this.entityManager = entityManager;
 		this.tagMasks = new HashMap<>();
-		this.uniqueTagToEntity = new HashMap<>();
-		this.entityToUniqueTag = new HashMap<>();
 	}
 
 	public void attachTag(Entity entity, String tag) {
@@ -110,10 +105,6 @@ public final class TagsManager {
 		return new HashSet<>(tagMasks.keySet());
 	}
 
-	public Set<String> getAllUniqueTags() {
-		return new HashSet<>(uniqueTagToEntity.keySet());
-	}
-
 
 	public void maskAnd(Bits entityIndexesMask, ReadableLinearStructure<String> tagNames) {
 		for(int i = 0; i < tagNames.size(); ++i) {
@@ -141,43 +132,6 @@ public final class TagsManager {
 	}
 
 
-	public void attachUniqueTag(Entity entity, String uniqueTag) {
-		entityManager.assertIsAlive(entity);
-
-		Entity relatedEntity = uniqueTagToEntity.get(uniqueTag);
-		if(relatedEntity != null && !relatedEntity.equals(entity))
-			throw new DuplicateUniqueTagException("Unique tag '" + uniqueTag + "' already assign to " + relatedEntity);
-
-		detachUniqueTag(entity);
-		uniqueTagToEntity.put(uniqueTag, entity);
-		entityToUniqueTag.put(entity, uniqueTag);
-	}
-
-	public void detachUniqueTag(String uniqueTag) {
-		entityToUniqueTag.remove(uniqueTagToEntity.remove(uniqueTag));
-	}
-
-	public void detachUniqueTag(Entity entity) {
-		uniqueTagToEntity.remove(entityToUniqueTag.remove(entity));
-	}
-
-	public Entity getEntityByUniqueTag(String uniqueTag) {
-		return uniqueTagToEntity.get(uniqueTag);
-	}
-
-	public String getUniqueTagByEntity(Entity entity) {
-		return entityToUniqueTag.get(entity);
-	}
-
-	public boolean hasUniqueTag(Entity entity, String uniqueTag) {
-		return entityManager.isAlive(entity) && entity.equals(uniqueTagToEntity.get(uniqueTag));
-	}
-
-	public boolean isUniqueTagClaimed(String uniqueTag) {
-		return uniqueTagToEntity.containsKey(uniqueTag);
-	}
-
-
 	public ReadableBits getEntityIndexesMaskByTag(String tag) {
 		return tagMasks.get(tag);
 	}
@@ -202,5 +156,4 @@ public final class TagsManager {
 		Bits bits = tagMasks.get(tag);
 		return bits != null && bits.inBound(entity.index()) && bits.get(entity.index());
 	}
-
 }

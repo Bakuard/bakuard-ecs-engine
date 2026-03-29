@@ -8,17 +8,20 @@ import com.bakuard.ecsEngine.component.EntityFilter;
 import com.bakuard.ecsEngine.component.TagsManager;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
+import com.bakuard.ecsEngine.entity.EntityNamesManager;
 
 import java.util.Set;
 
 public final class World {
 
 	private final EntityManager entityManager;
+	private final EntityNamesManager entityNamesManager;
 	private final CompsManager compsManager;
 	private final TagsManager tagsManager;
 
 	public World() {
 		this.entityManager = new EntityManager();
+		this.entityNamesManager = new EntityNamesManager(entityManager);
 		this.compsManager = new CompsManager(entityManager);
 		this.tagsManager = new TagsManager(entityManager);
 	}
@@ -37,7 +40,7 @@ public final class World {
 	public void remove(Entity entity) {
 		compsManager.detachAllComps(entity);
 		tagsManager.detachAllTags(entity);
-		tagsManager.detachUniqueTag(entity);
+		entityNamesManager.removeName(entity);
 		entityManager.remove(entity);
 	}
 
@@ -192,37 +195,38 @@ public final class World {
 		return tagsManager.getAllTags();
 	}
 
-	public Set<String> getAllUniqueTags() {
-		return tagsManager.getAllUniqueTags();
+	public Set<String> getAllEntityNames() {
+		return entityNamesManager.getAllNames();
 	}
 
 
-	public void attachUniqueTag(Entity entity, String uniqueTag) {
-		tagsManager.attachUniqueTag(entity, uniqueTag);
+	public void assignName(Entity entity, String name) {
+		entityNamesManager.assignName(entity, name);
 	}
 
-	public void detachUniqueTag(String uniqueTag) {
-		tagsManager.detachUniqueTag(uniqueTag);
+	public void removeName(String name) {
+		entityNamesManager.removeName(name);
 	}
 
-	public void detachUniqueTag(Entity entity) {
-		tagsManager.detachUniqueTag(entity);
+	public void removeName(Entity entity) {
+		entityNamesManager.removeName(entity);
 	}
 
-	public Entity getEntityByUniqueTag(String uniqueTag) {
-		return tagsManager.getEntityByUniqueTag(uniqueTag);
+
+	public Entity getEntityByName(String name) {
+		return entityNamesManager.getEntityByName(name);
 	}
 
-	public String getUniqueTagByEntity(Entity entity) {
-		return tagsManager.getUniqueTagByEntity(entity);
+	public String getNameByEntity(Entity entity) {
+		return entityNamesManager.getNameByEntity(entity);
 	}
 
-	public boolean hasUniqueTag(Entity entity, String uniqueTag) {
-		return tagsManager.hasUniqueTag(entity, uniqueTag);
+	public boolean hasName(Entity entity, String name) {
+		return entityNamesManager.hasName(entity, name);
 	}
 
-	public boolean isUniqueTagClaimed(String uniqueTag) {
-		return tagsManager.isUniqueTagClaimed(uniqueTag);
+	public boolean isEntityNameClaimed(String name) {
+		return entityNamesManager.isNameClaimed(name);
 	}
 
 
