@@ -18,7 +18,7 @@ public final class CompsManager {
 	}
 
 	private CompsManager(CompsManager compsManager, EntityManager entityManager) {
-		this.entityManager = entityManager;
+		this.entityManager = Objects.requireNonNull(entityManager);
 		this.compPools = new HashMap<>(compsManager.compPools);
 	}
 
@@ -168,6 +168,19 @@ public final class CompsManager {
 
 	public Set<String> getAllCompPoolNames() {
 		return new HashSet<>(compPools.keySet());
+	}
+
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || getClass() != o.getClass()) return false;
+		CompsManager that = (CompsManager) o;
+		return entityManager.equals(that.entityManager) && compPools.equals(that.compPools);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(entityManager, compPools);
 	}
 
 
