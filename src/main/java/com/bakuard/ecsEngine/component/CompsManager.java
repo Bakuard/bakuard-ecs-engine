@@ -17,6 +17,16 @@ public final class CompsManager {
 		this.compPools = new HashMap<>();
 	}
 
+	private CompsManager(CompsManager compsManager, EntityManager entityManager) {
+		this.entityManager = entityManager;
+		this.compPools = new HashMap<>(compsManager.compPools);
+	}
+
+	public CompsManager copyWith(EntityManager entityManager) {
+		return new CompsManager(this, entityManager);
+	}
+
+
 	public void attachComp(Entity entity, Object comp) {
 		attachComp(entity, comp, comp.getClass().getName());
 	}
