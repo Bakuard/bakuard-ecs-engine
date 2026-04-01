@@ -18,6 +18,17 @@ public final class EntityNamesManager {
 		this.entityToName = new HashMap<>();
 	}
 
+	private EntityNamesManager(EntityNamesManager entityNamesManager, EntityManager entityManager) {
+		this.entityManager = entityManager;
+		this.nameToEntity = new HashMap<>(entityNamesManager.nameToEntity);
+		this.entityToName = new HashMap<>(entityNamesManager.entityToName);
+	}
+
+	public EntityNamesManager copyWith(EntityManager entityManager) {
+		return new EntityNamesManager(this, entityManager);
+	}
+
+
 	public void assignName(Entity entity, String name) {
 		entityManager.assertIsAlive(entity);
 

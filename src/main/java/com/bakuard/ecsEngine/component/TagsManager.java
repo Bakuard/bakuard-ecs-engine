@@ -21,6 +21,16 @@ public final class TagsManager {
 		this.tagMasks = new HashMap<>();
 	}
 
+	private TagsManager(TagsManager tagsManager, EntityManager entityManager) {
+		this.entityManager = entityManager;
+		this.tagMasks = new HashMap<>(tagsManager.tagMasks);
+	}
+
+	public TagsManager copyWith(EntityManager entityManager) {
+		return new TagsManager(this, entityManager);
+	}
+
+
 	public void attachTag(Entity entity, String tag) {
 		entityManager.assertIsAlive(entity);
 		attachTagIgnoringEntityState(entity, tag);
