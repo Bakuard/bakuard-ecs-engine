@@ -281,4 +281,21 @@ public final class World {
 	public void setEntityIndexesMaskForTag(String tag, ReadableBits entityIndexes) {
 		tagsManager.setEntityIndexesMaskForTag(tag, entityIndexes);
 	}
+
+
+	public EntityManager copyEntityManager() {
+		return new EntityManager(entityManager);
+	}
+
+	public EntityNamesManager getEntityNamesManager() {
+		return entityNamesManager;
+	}
+
+	public TagsManager getTagsManager() {
+		return tagsManager;
+	}
+
+	public CompsManager getCompsManager() {
+		return compsManager;
+	}
 }

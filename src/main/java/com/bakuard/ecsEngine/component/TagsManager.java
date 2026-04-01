@@ -6,10 +6,7 @@ import com.bakuard.collections.ReadableLinearStructure;
 import com.bakuard.ecsEngine.entity.Entity;
 import com.bakuard.ecsEngine.entity.EntityManager;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public final class TagsManager {
 
@@ -22,7 +19,7 @@ public final class TagsManager {
 	}
 
 	private TagsManager(TagsManager tagsManager, EntityManager entityManager) {
-		this.entityManager = entityManager;
+		this.entityManager = Objects.requireNonNull(entityManager);
 		this.tagMasks = new HashMap<>(tagsManager.tagMasks);
 	}
 
@@ -148,6 +145,19 @@ public final class TagsManager {
 
 	public void setEntityIndexesMaskForTag(String tag, ReadableBits entityIndexes) {
 		tagMasks.put(tag, new Bits(entityIndexes));
+	}
+
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || getClass() != o.getClass()) return false;
+		TagsManager that = (TagsManager) o;
+		return entityManager.equals(that.entityManager) && tagMasks.equals(that.tagMasks);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(entityManager, tagMasks);
 	}
 
 

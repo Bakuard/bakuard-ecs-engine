@@ -4,6 +4,7 @@ import com.bakuard.ecsEngine.exception.DuplicateEntityNameException;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public final class EntityNamesManager {
@@ -19,7 +20,7 @@ public final class EntityNamesManager {
 	}
 
 	private EntityNamesManager(EntityNamesManager entityNamesManager, EntityManager entityManager) {
-		this.entityManager = entityManager;
+		this.entityManager = Objects.requireNonNull(entityManager);
 		this.nameToEntity = new HashMap<>(entityNamesManager.nameToEntity);
 		this.entityToName = new HashMap<>(entityNamesManager.entityToName);
 	}
@@ -69,5 +70,28 @@ public final class EntityNamesManager {
 
 	public Set<String> getAllNames() {
 		return new HashSet<>(nameToEntity.keySet());
+	}
+
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || getClass() != o.getClass()) return false;
+		EntityNamesManager that = (EntityNamesManager) o;
+		return entityManager.equals(that.entityManager)
+				&& nameToEntity.equals(that.nameToEntity)
+				&& entityToName.equals(that.entityToName);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(entityManager, nameToEntity, entityToName);
+	}
+
+	@Override
+	public String toString() {
+		return "EntityNamesManager{" +
+				"nameToEntity: " + nameToEntity +
+				", entityToName: " + entityToName +
+				'}';
 	}
 }

@@ -198,15 +198,22 @@ public final class EntityManager {
 		if (o == null || getClass() != o.getClass()) return false;
 		EntityManager other = (EntityManager) o;
 
-		boolean result = generationsSize == other.generationsSize && aliveEntitiesMask.equals(other.aliveEntitiesMask);
+		boolean result = generationsSize == other.generationsSize
+				&& recycledIndexesSize == other.recycledIndexesSize
+				&& aliveEntitiesMask.equals(other.aliveEntitiesMask);
 		for(int i = 0; i < generationsSize && result; ++i) result = generations[i] == other.generations[i];
+		for(int i = 0; i < recycledIndexesSize && result; ++i) result = recycledIndexes[i] == other.recycledIndexes[i];
 		return result;
 	}
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hash(generationsSize, aliveEntitiesMask);
+		int result = 1;
+		result = 31 * result + generationsSize;
+		result = 31 * result + recycledIndexesSize;
+		result = 31 * result + aliveEntitiesMask.hashCode();
 		for(int i = 0; i < generationsSize; ++i) result = 31 * result + generations[i];
+		for(int i = 0; i < recycledIndexesSize; ++i) result = 31 * result + recycledIndexes[i];
 		return result;
 	}
 
