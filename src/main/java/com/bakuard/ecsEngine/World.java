@@ -235,24 +235,26 @@ public final class World {
 	}
 
 
-	public Bits selectEntityIndexesMask(EntityFilter entityFilter) {
-		Bits entityIndexesMask = new Bits(entityManager.getAliveEntitiesMask());
+	public Bits selectEntityIndexesAsMask(EntityFilter entityFilter) {
+		Bits entityIndexes = new Bits(entityManager.getAliveEntitiesMask());
+		selectEntityIndexesAndWriteToMask(entityFilter, entityIndexes);
+		return entityIndexes;
+	}
 
+	public void selectEntityIndexesAndWriteToMask(EntityFilter entityFilter, Bits inOutMask) {
 		if(entityFilter.isWithoutComps()) {
-			compsManager.maskAndNotAll(entityIndexesMask);
+			compsManager.maskAndNotAll(inOutMask);
 		} else {
-			compsManager.maskAnd(entityIndexesMask, entityFilter.getAllComps());
-			compsManager.maskAndNot(entityIndexesMask, entityFilter.getNoneComps());
+			compsManager.maskAnd(inOutMask, entityFilter.getAllComps());
+			compsManager.maskAndNot(inOutMask, entityFilter.getNoneComps());
 		}
 
 		if(entityFilter.isWithoutTags()) {
-			tagsManager.maskAndNotAll(entityIndexesMask);
+			tagsManager.maskAndNotAll(inOutMask);
 		} else {
-			tagsManager.maskAnd(entityIndexesMask, entityFilter.getAllTags());
-			tagsManager.maskAndNot(entityIndexesMask, entityFilter.getNoneTags());
+			tagsManager.maskAnd(inOutMask, entityFilter.getAllTags());
+			tagsManager.maskAndNot(inOutMask, entityFilter.getNoneTags());
 		}
-
-		return entityIndexesMask;
 	}
 
 
@@ -278,8 +280,8 @@ public final class World {
 		return tagsManager.getEntityIndexesMaskByTag(tag);
 	}
 
-	public void setEntityIndexesMaskForTag(String tag, ReadableBits entityIndexes) {
-		tagsManager.setEntityIndexesMaskForTag(tag, entityIndexes);
+	public void setEntityIndexesMaskForTag(ReadableBits entityIndexes, String tag) {
+		tagsManager.setEntityIndexesMaskForTag(entityIndexes, tag);
 	}
 
 

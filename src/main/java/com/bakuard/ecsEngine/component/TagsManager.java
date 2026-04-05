@@ -143,7 +143,7 @@ public final class TagsManager {
 		return tagMasks.get(tag);
 	}
 
-	public void setEntityIndexesMaskForTag(String tag, ReadableBits entityIndexes) {
+	public void setEntityIndexesMaskForTag(ReadableBits entityIndexes, String tag) {
 		tagMasks.put(tag, new Bits(entityIndexes));
 	}
 

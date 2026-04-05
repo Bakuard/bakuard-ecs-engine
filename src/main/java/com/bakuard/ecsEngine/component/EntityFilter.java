@@ -8,8 +8,8 @@ import java.util.Objects;
 
 public final class EntityFilter {
 
-	private static final DynamicArray<String> emptyTags = new DynamicArray<>();
-	private static final DynamicArray<String> emptyComps = new DynamicArray<>();
+	private static final DynamicArray<String> EMPTY_TAGS = new DynamicArray<>();
+	private static final DynamicArray<String> EMPTY_COMPS = new DynamicArray<>();
 
 	private final DynamicArray<String> allTags;
 	private final DynamicArray<String> noneTags;
@@ -19,7 +19,7 @@ public final class EntityFilter {
 	private final boolean withoutTags;
 
 	public EntityFilter() {
-		this(emptyTags, emptyTags, emptyComps, emptyComps, false, false);
+		this(EMPTY_TAGS, EMPTY_TAGS, EMPTY_COMPS, EMPTY_COMPS, false, false);
 	}
 
 	private EntityFilter(DynamicArray<String> allTags,
