@@ -33,11 +33,11 @@ class WorldTest {
 			 => return empty mask
 			""")
 	@Test
-	public void selectEntityIndexesMask1() {
+	public void selectEntityIndexesAsMask1() {
 		World world = new World();
 		EntityFilter filter = new EntityFilter();
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Assertions.assertThat(selection.isClear()).isTrue();
 	}
@@ -54,7 +54,7 @@ class WorldTest {
 			 => return mask for all existed entities
 			""")
 	@Test
-	public void selectEntityIndexesMask2() {
+	public void selectEntityIndexesAsMask2() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -76,7 +76,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter();
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = Bits.filled(12);
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -94,7 +94,7 @@ class WorldTest {
 			 => return mask for entities without comps and empty entities
 			""")
 	@Test
-	public void selectEntityIndexesMask3() {
+	public void selectEntityIndexesAsMask3() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -116,7 +116,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().withoutComps(true);
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = Bits.of(9, 0,1,2, 6,7,8);
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -134,7 +134,7 @@ class WorldTest {
 			 => return mask for entities without tags and empty entities
 			""")
 	@Test
-	public void selectEntityIndexesMask4() {
+	public void selectEntityIndexesAsMask4() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -156,7 +156,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().withoutTags(true);
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = Bits.of(6, 0,1,2, 3,4,5);
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -174,7 +174,7 @@ class WorldTest {
 			 => return mask for empty entities
 			""")
 	@Test
-	public void selectEntityIndexesMask5() {
+	public void selectEntityIndexesAsMask5() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -196,7 +196,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().withoutTags(true).withoutComps(true);
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = Bits.of(6, 0,1,2);
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -214,7 +214,7 @@ class WorldTest {
 			 => return mask for empty with specified tags
 			""")
 	@Test
-	public void selectEntityIndexesMask6() {
+	public void selectEntityIndexesAsMask6() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -236,7 +236,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().allTags("A", "B");
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = Bits.of(12, 6,7,9,10);
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -254,7 +254,7 @@ class WorldTest {
 			 => return mask for empty without specified tags
 			""")
 	@Test
-	public void selectEntityIndexesMask7() {
+	public void selectEntityIndexesAsMask7() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -276,7 +276,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().noneTags("A", "B");
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = Bits.of(12, 0,1,2, 3,4,5, 8,11);
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -294,7 +294,7 @@ class WorldTest {
 			 => return mask for empty with specified tags and without other specified tags
 			""")
 	@Test
-	public void selectEntityIndexesMask8() {
+	public void selectEntityIndexesAsMask8() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -316,7 +316,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().allTags("A", "B").noneTags("E", "F");
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = Bits.of(12, 6,9);
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -335,7 +335,7 @@ class WorldTest {
 			 => return empty mask
 			""")
 	@Test
-	public void selectEntityIndexesMask9() {
+	public void selectEntityIndexesAsMask9() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -357,7 +357,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().allTags("A", "B").noneTags("B", "E");
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = new Bits();
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -375,7 +375,7 @@ class WorldTest {
 			 => return mask for with specified comps
 			""")
 	@Test
-	public void selectEntityIndexesMask10() {
+	public void selectEntityIndexesAsMask10() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -397,7 +397,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().allComps(A.class, B.class);
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = Bits.of(12, 3,4,9,10);
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -415,7 +415,7 @@ class WorldTest {
 			 => return mask for empty without specified comps
 			""")
 	@Test
-	public void selectEntityIndexesMask11() {
+	public void selectEntityIndexesAsMask11() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -437,7 +437,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().noneComps(A.class, B.class);
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = Bits.of(12, 0,1,2, 5, 6,7,8, 11);
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -455,7 +455,7 @@ class WorldTest {
 			 => return mask for empty with specified comps and without other specified comps
 			""")
 	@Test
-	public void selectEntityIndexesMask12() {
+	public void selectEntityIndexesAsMask12() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -477,7 +477,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().allComps(A.class, B.class).noneComps(E.class, F.class);
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = Bits.of(12, 3,9);
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -496,7 +496,7 @@ class WorldTest {
 			 => return empty mask
 			""")
 	@Test
-	public void selectEntityIndexesMask13() {
+	public void selectEntityIndexesAsMask13() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -518,7 +518,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().allComps(A.class, B.class).noneComps(B.class, E.class);
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = new Bits();
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -537,7 +537,7 @@ class WorldTest {
 			 => return empty mask
 			""")
 	@Test
-	public void selectEntityIndexesMask14() {
+	public void selectEntityIndexesAsMask14() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -559,7 +559,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().allComps(UnexistedComp.class);
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = new Bits();
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);
@@ -578,7 +578,7 @@ class WorldTest {
 			 => return empty mask
 			""")
 	@Test
-	public void selectEntityIndexesMask15() {
+	public void selectEntityIndexesAsMask15() {
 		World world = new World();
 		Entity emptyEntity1 = world.create();
 		Entity emptyEntity2 = world.create();
@@ -600,7 +600,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
 		EntityFilter filter = new EntityFilter().allTags("UnexistedTag");
 
-		Bits selection = world.selectEntityIndexesMask(filter);
+		Bits selection = world.selectEntityIndexesAsMask(filter);
 
 		Bits actual = new Bits();
 		Assertions.assertThat(selection).usingComparator(BITS_COMPARATOR).isEqualTo(actual);

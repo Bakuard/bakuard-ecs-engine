@@ -235,8 +235,12 @@ public final class World {
 	}
 
 
-	public Bits selectEntityIndexesMask(EntityFilter entityFilter) {
-		Bits entityIndexesMask = new Bits(entityManager.getAliveEntitiesMask());
+	public Bits selectEntityIndexesAsMask(EntityFilter entityFilter) {
+		return selectEntityIndexesAsMask(entityFilter, entityManager.getAliveEntitiesMask());
+	}
+
+	public Bits selectEntityIndexesAsMask(EntityFilter entityFilter, ReadableBits initMask) {
+		Bits entityIndexesMask = new Bits(initMask);
 
 		if(entityFilter.isWithoutComps()) {
 			compsManager.maskAndNotAll(entityIndexesMask);
@@ -278,8 +282,8 @@ public final class World {
 		return tagsManager.getEntityIndexesMaskByTag(tag);
 	}
 
-	public void setEntityIndexesMaskForTag(String tag, ReadableBits entityIndexes) {
-		tagsManager.setEntityIndexesMaskForTag(tag, entityIndexes);
+	public void setEntityIndexesMaskForTag(ReadableBits entityIndexes, String tag) {
+		tagsManager.setEntityIndexesMaskForTag(entityIndexes, tag);
 	}
 
 
