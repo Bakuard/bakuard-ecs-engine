@@ -6,7 +6,7 @@
 
 	<groupId>com.bakuard</groupId>
 	<artifactId>ecsEngine</artifactId>
-	<version>0.8.0</version>
+	<version>0.8.0-SNAPSHOT</version>
 
 	<properties>
 		<maven.compiler.source>25</maven.compiler.source>

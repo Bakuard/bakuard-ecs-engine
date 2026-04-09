@@ -63,8 +63,8 @@ class EntityTest {
 	}
 
 	@DisplayName("""
-			toLong(), Entity(entityAsLong):
-			 => new Entity(originEntity.asLong()) must be equal originEntity
+			toLong(), fromLong():
+			 => Entity.fromLong(Entity.toLong(originEntity)) must be equal originEntity
 			""")
 	@Test
 	void toLong1() {
@@ -73,5 +73,18 @@ class EntityTest {
 		Entity actual = Entity.fromLong(Entity.toLong(origin));
 
 		Assertions.assertThat(actual).isEqualTo(origin);
+	}
+
+	@DisplayName("""
+			toLong(index = 0, generation = 0):
+			 => 0
+			""")
+	@Test
+	void toLong2() {
+		Entity origin = new Entity(0, 0);
+
+		long entityAsLong = Entity.toLong(origin);
+
+		Assertions.assertThat(entityAsLong).isZero();
 	}
 }
