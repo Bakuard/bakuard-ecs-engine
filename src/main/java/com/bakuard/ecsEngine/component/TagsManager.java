@@ -56,7 +56,8 @@ public final class TagsManager {
 	}
 
 	public void detachTagFromAllEntities(String tag) {
-		tagMasks.remove(tag);
+		Bits bits = tagMasks.get(tag);
+		if(bits != null) bits.clearAll();
 	}
 
 	public void replaceAllTags(Entity entity, String... tags) {

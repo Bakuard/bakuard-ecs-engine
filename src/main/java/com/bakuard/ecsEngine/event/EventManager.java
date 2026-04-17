@@ -1,11 +1,12 @@
 package com.bakuard.ecsEngine.event;
 
-import com.bakuard.collections.ReadableLinearStructure;
 import com.bakuard.collections.RingBuffer;
-import com.bakuard.ecsEngine.exception.UnknownEventConsumerException;
+import com.bakuard.ecsEngine.exception.UnknownEventBoxException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,55 +14,75 @@ public final class EventManager {
 
 	private volatile RingBuffer<Event> writeBuffer;
 	private volatile RingBuffer<Event> readBuffer;
-	private final HashMap<String, EventConsumer> consumers;
-	private final HashMap<String, Event> singletonEvents;
 	private final Lock lock = new ReentrantLock();
+
+	private final HashMap<String, EventInbox> inputBoxes;
+	private final HashMap<String, List<EventInbox>> eventToInputBoxes;
+	private final ConcurrentHashMap<String, EventOutbox> outputBoxes;
+
+	private final HashMap<String, Event> globalEvents;
 
 	public EventManager(int maxEventBufferSize) {
 		writeBuffer = new RingBuffer<>(maxEventBufferSize);
 		readBuffer = new RingBuffer<>(maxEventBufferSize);
-		consumers = new HashMap<>();
-		singletonEvents = new HashMap<>();
+		inputBoxes = new HashMap<>();
+		eventToInputBoxes = new HashMap<>();
+		outputBoxes = new ConcurrentHashMap<>();
+		globalEvents = new HashMap<>();
 	}
 
-	public EventManager registerEventConsumer(String consumerName, int maxSize, String... eventNames) {
-		return registerEventConsumer(consumerName, maxSize, EventsOverflowPolicy.REWRITE_OLDEST, eventNames);
+	public EventManager registerInbox(String eventBoxName, int maxSize, String... eventNames) {
+		return registerInbox(eventBoxName, maxSize, EventsOverflowPolicy.REWRITE_OLDEST, eventNames);
 	}
 
-	public EventManager registerEventConsumer(String consumerName, int maxSize, EventsOverflowPolicy policy, String... eventNames) {
-		EventConsumer eventConsumer = new EventConsumer(maxSize, policy, eventNames);
-		this.consumers.put(consumerName, eventConsumer);
+	public EventManager registerInbox(String eventBoxName, int maxSize, EventsOverflowPolicy policy, String... eventNames) {
+		unregisterInbox(eventBoxName);
+
+		EventInbox eventBox = new EventInbox(eventBoxName, maxSize, policy);
+		inputBoxes.put(eventBoxName, eventBox);
+		for(String eventName : eventNames)
+			eventToInputBoxes.computeIfAbsent(eventName, key -> new ArrayList<>()).add(eventBox);
 		return this;
 	}
 
-	public boolean hasEvents(String consumerName) {
-		return getEventConsumer(consumerName).hasEvents();
+	public EventManager unregisterInbox(String eventBoxName) {
+		EventInbox eventBox = inputBoxes.remove(eventBoxName);
+		eventToInputBoxes.forEach((eventName, eventInboxes) -> eventInboxes.remove(eventBox));
+		return this;
 	}
 
-	public Event consume(String consumerName) {
-		return getEventConsumer(consumerName).consume();
+	public EventInbox getInbox(String eventBoxName) {
+		EventInbox eventBox = inputBoxes.get(eventBoxName);
+		if(eventBox == null) {
+			throw new UnknownEventBoxException("There is not input event box with name='" + eventBoxName + '\'');
+		}
+		return eventBox;
 	}
 
-	public ReadableLinearStructure<Event> getAllEvents(String consumerName) {
-		return getEventConsumer(consumerName).getAllEvents();
-	}
-
-	public void clear(String eventConsumer) {
-		getEventConsumer(eventConsumer).clear();
+	public boolean hasInbox(String eventBoxName) {
+		return inputBoxes.containsKey(eventBoxName);
 	}
 
 
-	public void publishAsyncEvent(String eventName, Object eventPayload) {
+	public void publishAsyncInputEvent(String eventName, Object eventPayload) {
+		publishAsyncInputEvent(new Event(eventName, eventPayload));
+	}
+
+	public void publishAsyncInputEvent(Event event) {
 		try {
 			lock.lock();
-			writeBuffer.addLastOrReplace(new Event(eventName, eventPayload));
+			writeBuffer.addLastOrReplace(event);
 		} finally {
 			lock.unlock();
 		}
 	}
 
-	public void publishSyncEvent(String eventName, Object eventPayload) {
-		publishEvent(new Event(eventName, eventPayload));
+	public void publishSyncInputEvent(String eventName, Object eventPayload) {
+		publishSyncInputEvent(new Event(eventName, eventPayload));
+	}
+
+	public void publishSyncInputEvent(Event event) {
+		publishEvent(event);
 	}
 
 	public void flushBufferOfAsyncEvents() {
@@ -81,72 +102,57 @@ public final class EventManager {
 	}
 
 
-	public void setSingletonEvent(Event event) {
-		singletonEvents.put(event.getName(), event);
+	public EventManager registerOutbox(String eventBoxName, int maxSize) {
+		return registerOutbox(eventBoxName, maxSize, EventsOverflowPolicy.REWRITE_OLDEST);
 	}
 
-	public Event getAndClearSingletonEvent(String eventName) {
-		return singletonEvents.remove(eventName);
+	public EventManager registerOutbox(String eventBoxName, int maxSize, EventsOverflowPolicy policy) {
+		EventOutbox eventBox = new EventOutbox(eventBoxName, maxSize, policy);
+		outputBoxes.put(eventBoxName, eventBox);
+		return this;
 	}
 
-	public Event getSingletonEvent(String eventName) {
-		return singletonEvents.get(eventName);
+	public EventManager unregisterOutbox(String eventBoxName) {
+		outputBoxes.remove(eventBoxName);
+		return this;
 	}
 
-
-	private EventConsumer getEventConsumer(String consumerName) {
-		EventConsumer eventConsumer = this.consumers.get(consumerName);
-		if(eventConsumer == null) {
-			throw new UnknownEventConsumerException("There is not EventConsumer with name='" + consumerName + '\'');
+	public EventOutbox getOutbox(String eventBoxName) {
+		EventOutbox eventBox = outputBoxes.get(eventBoxName);
+		if(eventBox == null) {
+			throw new UnknownEventBoxException("There is not output event box with name='" + eventBoxName + '\'');
 		}
-		return eventConsumer;
+		return eventBox;
 	}
+
+	public boolean hasOutbox(String eventBoxName) {
+		return outputBoxes.containsKey(eventBoxName);
+	}
+
+	public void unregisterAllOutboxes() {
+		outputBoxes.clear();
+	}
+
+
+	public void setGlobalEvent(String eventName, Object eventPayload) {
+		setGlobalEvent(new Event(eventName, eventPayload));
+	}
+
+	public void setGlobalEvent(Event event) {
+		globalEvents.put(event.name(), event);
+	}
+
+	public Event getAndClearGlobalEvent(String eventName) {
+		return globalEvents.remove(eventName);
+	}
+
+	public Event getGlobalEvent(String eventName) {
+		return globalEvents.get(eventName);
+	}
+
 
 	private void publishEvent(Event event) {
-		consumers.values().stream()
-				.filter(eventConsumer -> eventConsumer.canContainEventsWithName(event.getName()))
-				.forEach(eventConsumer -> eventConsumer.addEvent(event));
-	}
-
-
-	private static final class EventConsumer {
-
-		private final EventsOverflowPolicy policy;
-		private final RingBuffer<Event> events;
-		private final Set<String> eventNames;
-
-		EventConsumer(int maxBufferSize, EventsOverflowPolicy policy, String... eventNames) {
-			this.policy = policy;
-			this.events = new RingBuffer<>(maxBufferSize);
-			this.eventNames = Set.of(eventNames);
-		}
-
-		boolean hasEvents() {
-			return !events.isEmpty();
-		}
-
-		Event consume() {
-			return events.removeFirst();
-		}
-
-		ReadableLinearStructure<Event> getAllEvents() {
-			return events;
-		}
-
-		boolean canContainEventsWithName(String eventName) {
-			return eventNames.contains(eventName);
-		}
-
-		void addEvent(Event event) {
-			if(policy == EventsOverflowPolicy.REWRITE_OLDEST) {
-				events.addLastOrReplace(event);
-			} else {
-				events.addLastOrSkip(event);
-			}
-		}
-
-		void clear() {
-			events.clear();
-		}
+		List<EventInbox> inputBoxes = eventToInputBoxes.get(event.name());
+		if(inputBoxes != null) inputBoxes.forEach(inputBox -> inputBox.put(event));
 	}
 }

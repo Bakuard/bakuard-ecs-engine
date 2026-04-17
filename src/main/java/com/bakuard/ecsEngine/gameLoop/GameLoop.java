@@ -108,16 +108,16 @@ public final class GameLoop {
 
 	private static final class GameTimeImpl implements GameTime {
 
-		private long lastFrameInMillis;
 		private final long updateIntervalInMillis;
+		private long lastFrameInMillis;
 		private long totalElapsedTimeInMillis;
 		private long totalElapsedTimeInFrames;
 
 		public GameTimeImpl(long updateIntervalInMillis) {
-			this.lastFrameInMillis = updateIntervalInMillis;
 			this.updateIntervalInMillis = updateIntervalInMillis;
+			this.lastFrameInMillis = 0;
 			this.totalElapsedTimeInMillis = updateIntervalInMillis;
-			this.totalElapsedTimeInFrames = 1;
+			this.totalElapsedTimeInFrames = 0;
 		}
 
 		void increaseTime(long lastFrameInMillis) {
