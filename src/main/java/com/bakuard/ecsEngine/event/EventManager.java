@@ -64,44 +64,6 @@ public final class EventManager {
 	}
 
 
-	public void publishAsyncInputEvent(String eventName, Object eventPayload) {
-		publishAsyncInputEvent(new Event(eventName, eventPayload));
-	}
-
-	public void publishAsyncInputEvent(Event event) {
-		try {
-			lock.lock();
-			writeBuffer.addLastOrReplace(event);
-		} finally {
-			lock.unlock();
-		}
-	}
-
-	public void publishSyncInputEvent(String eventName, Object eventPayload) {
-		publishSyncInputEvent(new Event(eventName, eventPayload));
-	}
-
-	public void publishSyncInputEvent(Event event) {
-		publishEvent(event);
-	}
-
-	public void flushBufferOfAsyncEvents() {
-		try {
-			lock.lock();
-			RingBuffer<Event> temp = writeBuffer;
-			writeBuffer = readBuffer;
-			readBuffer = temp;
-		} finally {
-			lock.unlock();
-		}
-
-		while(!readBuffer.isEmpty()) {
-			Event event = readBuffer.removeFirst();
-			publishEvent(event);
-		}
-	}
-
-
 	public EventManager registerOutbox(String eventBoxName, int maxSize) {
 		return registerOutbox(eventBoxName, maxSize, EventsOverflowPolicy.REWRITE_OLDEST);
 	}
@@ -131,6 +93,45 @@ public final class EventManager {
 
 	public void unregisterAllOutboxes() {
 		outputBoxes.clear();
+	}
+
+
+	public void publishAsyncInputEvent(String eventName, Object eventPayload) {
+		publishAsyncInputEvent(new Event(eventName, eventPayload));
+	}
+
+	public void publishAsyncInputEvent(Event event) {
+		try {
+			lock.lock();
+			writeBuffer.addLastOrReplace(event);
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	public void flushBufferOfAsyncEvents() {
+		try {
+			lock.lock();
+			RingBuffer<Event> temp = writeBuffer;
+			writeBuffer = readBuffer;
+			readBuffer = temp;
+		} finally {
+			lock.unlock();
+		}
+
+		while(!readBuffer.isEmpty()) {
+			Event event = readBuffer.removeFirst();
+			publishEvent(event);
+		}
+	}
+
+
+	public void publishSyncInputEvent(String eventName, Object eventPayload) {
+		publishSyncInputEvent(new Event(eventName, eventPayload));
+	}
+
+	public void publishSyncInputEvent(Event event) {
+		publishEvent(event);
 	}
 
 

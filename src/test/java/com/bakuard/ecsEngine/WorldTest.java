@@ -114,7 +114,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags1, "A", "B", "C", "D");
 		world.attachTags(entityWithCompsAndTags2, "A", "B", "E", "F");
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
-		EntityFilter filter = new EntityFilter().withoutComps(true);
+		EntityFilter filter = new EntityFilter().withoutComps();
 
 		Bits selection = world.selectEntityIndexesAsMask(filter);
 
@@ -154,7 +154,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags1, "A", "B", "C", "D");
 		world.attachTags(entityWithCompsAndTags2, "A", "B", "E", "F");
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
-		EntityFilter filter = new EntityFilter().withoutTags(true);
+		EntityFilter filter = new EntityFilter().withoutTags();
 
 		Bits selection = world.selectEntityIndexesAsMask(filter);
 
@@ -194,7 +194,7 @@ class WorldTest {
 		world.attachTags(entityWithCompsAndTags1, "A", "B", "C", "D");
 		world.attachTags(entityWithCompsAndTags2, "A", "B", "E", "F");
 		world.attachTags(entityWithCompsAndTags3, "C", "D", "E", "F");
-		EntityFilter filter = new EntityFilter().withoutTags(true).withoutComps(true);
+		EntityFilter filter = new EntityFilter().withoutTags().withoutComps();
 
 		Bits selection = world.selectEntityIndexesAsMask(filter);
 
